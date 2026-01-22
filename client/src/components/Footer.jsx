@@ -1,0 +1,99 @@
+import { motion } from "framer-motion";
+import { Facebook, Instagram, Twitter, Youtube, Send, MapPin, Phone, Mail } from "lucide-react";
+
+const Footer = () => {
+  const currentYear = new Date().getFullYear();
+
+  return (
+    <footer className="relative bg-zinc-50 dark:bg-black pt-20 pb-10 overflow-hidden border-t border-gray-200 dark:border-white/5 transition-colors duration-500">
+      {/* Decorative background glow for dark mode */}
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-red-600/10 blur-[120px] rounded-full pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto px-6 lg:px-12 relative z-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
+          
+          {/* Brand Column */}
+          <div className="space-y-6">
+            <h1 className="text-2xl font-black tracking-tighter flex items-center gap-1 dark:text-white text-zinc-900">
+              <span className="bg-red-600 text-white px-2 py-0.5 rounded">S</span>
+              <span>WEAT<span className="text-red-600">BOX</span></span>
+            </h1>
+            <p className="text-zinc-600 dark:text-zinc-400 leading-relaxed text-sm">
+              The premier fitness destination in Ethiopia. We blend world-class equipment with elite coaching to help you forge your strongest self.
+            </p>
+            <div className="flex gap-4">
+              {[Facebook, Instagram, Twitter, Youtube].map((Icon, i) => (
+                <motion.a
+                  key={i}
+                  href="#"
+                  whileHover={{ y: -3, color: "#dc2626" }}
+                  className="p-2 rounded-lg bg-white dark:bg-white/5 border border-gray-200 dark:border-white/10 dark:text-white text-zinc-600 shadow-sm"
+                >
+                  <Icon size={18} />
+                </motion.a>
+              ))}
+            </div>
+          </div>
+
+          {/* Quick Links */}
+          <div>
+            <h3 className="text-zinc-900 dark:text-white font-black uppercase italic tracking-widest text-sm mb-6">Navigation</h3>
+            <ul className="space-y-4 text-sm font-bold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+              {["Home", "Programs", "Gallery", "About Us", "Contact"].map((link) => (
+                <li key={link}>
+                  <a href="#" className="hover:text-red-600 transition-colors">{link}</a>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Contact Info */}
+          <div>
+            <h3 className="text-zinc-900 dark:text-white font-black uppercase italic tracking-widest text-sm mb-6">Contact</h3>
+            <ul className="space-y-4 text-sm">
+              <li className="flex items-start gap-3 text-zinc-600 dark:text-zinc-400">
+                <MapPin className="text-red-600 shrink-0" size={18} />
+                <span>Bole Road, Addis Ababa, Ethiopia</span>
+              </li>
+              <li className="flex items-center gap-3 text-zinc-600 dark:text-zinc-400">
+                <Phone className="text-red-600 shrink-0" size={18} />
+                <span>+251 911 000 000</span>
+              </li>
+              <li className="flex items-center gap-3 text-zinc-600 dark:text-zinc-400">
+                <Mail className="text-red-600 shrink-0" size={18} />
+                <span>train@sweatbox.com</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Newsletter */}
+          <div>
+            <h3 className="text-zinc-900 dark:text-white font-black uppercase italic tracking-widest text-sm mb-6">Newsletter</h3>
+            <p className="text-zinc-600 dark:text-zinc-400 text-sm mb-4">Get training tips and class updates.</p>
+            <form className="relative group">
+              <input 
+                type="email" 
+                placeholder="Your email"
+                className="w-full bg-white dark:bg-zinc-900 border border-gray-200 dark:border-white/10 rounded-xl py-3 px-4 text-sm focus:outline-none focus:border-red-600 transition-colors dark:text-white"
+              />
+              <button className="absolute right-2 top-1.5 p-1.5 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                <Send size={16} />
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="pt-8 border-t border-gray-200 dark:border-white/5 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-bold uppercase tracking-[0.2em] text-zinc-400">
+          <p>© {currentYear} EthioFit. All Rights Reserved.</p>
+          <div className="flex gap-8">
+            <a href="#" className="hover:text-red-600 transition-colors">Privacy Policy</a>
+            <a href="#" className="hover:text-red-600 transition-colors">Terms of Service</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+export default Footer;
