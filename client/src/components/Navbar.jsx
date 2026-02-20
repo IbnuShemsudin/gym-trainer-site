@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom"; // Added for Routing
 import { motion, AnimatePresence, useScroll, useSpring } from "framer-motion";
 import { Menu, X, ChevronDown, Sun, Moon, ArrowRight, Zap, Instagram, Twitter, Youtube } from "lucide-react";
 
@@ -9,7 +10,10 @@ const Navbar = () => {
   const [activeSection, setActiveSection] = useState("hero");
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
 
-  // Scroll Progress Bar (The Pro Touch)
+  const location = useLocation(); // Detection of current page
+  const navigate = useNavigate();
+
+  // Scroll Progress Bar
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
 
@@ -23,29 +27,33 @@ const Navbar = () => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
 
-      // Smart Section Detection
-      const sections = ["hero", "programs", "gallery", "pricing", "contact"];
-      const current = sections.find(section => {
-        const el = document.getElementById(section);
-        if (el) {
-          const rect = el.getBoundingClientRect();
-          return rect.top <= 100 && rect.bottom >= 100;
-        }
-        return false;
-      });
-      if (current) setActiveSection(current);
+      // Section detection now only relevant if you want to track scroll on long pages
+      if (location.pathname === "/") {
+        const sections = ["hero", "programs", "gallery", "pricing", "contact"];
+        const current = sections.find(section => {
+          const el = document.getElementById(section);
+          if (el) {
+            const rect = el.getBoundingClientRect();
+            return rect.top <= 100 && rect.bottom >= 100;
+          }
+          return false;
+        });
+        if (current) setActiveSection(current);
+      }
     };
 
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [location.pathname]);
 
+  // UPDATED: All links are now true routes
   const navLinks = [
-    { name: "Home", href: "#hero", id: "hero" },
-    { name: "Programs", href: "#programs", id: "programs" },
-    { name: "Gallery", href: "#gallery", id: "gallery" },
-    { name: "Pricing", href: "#pricing", id: "pricing" },
-    { name: "Contact", href: "#contact", id: "contact" },
+    { name: "Home", href: "/", id: "hero" },
+    { name: "Programs", href: "/programs", id: "programs" },
+    { name: "Gallery", href: "/gallery", id: "gallery" },
+    { name: "Pricing", href: "/pricing", id: "pricing" },
+    { name: "Contact", href: "/contact", id: "contact" },
+    { name: "About", href: "/about", id: "about" },
   ];
 
   const programs = [
@@ -55,23 +63,27 @@ const Navbar = () => {
     { title: "Personal Coaching", desc: "1-on-1 expert guidance" },
   ];
 
-  const scrollToSection = (id) => {
+  // UPDATED: Now handles page navigation instead of smooth scrolling
+  const handleNavClick = (href) => {
     setMenuOpen(false);
+    navigate(href);
+  };
+
+  const scrollToSection = (id) => {
     const element = document.querySelector(id);
     if (element) {
-      const offset = 80; // Adjust for navbar height
+      const offset = 80;
       const bodyRect = document.body.getBoundingClientRect().top;
       const elementRect = element.getBoundingClientRect().top;
       const elementPosition = elementRect - bodyRect;
       const offsetPosition = elementPosition - offset;
-
       window.scrollTo({ top: offsetPosition, behavior: "smooth" });
     }
   };
 
   return (
     <>
-      {/* Scroll Progress Bar - Highest Z-Index */}
+      {/* Scroll Progress Bar */}
       <motion.div className="fixed top-0 left-0 right-0 h-[3px] bg-red-600 z-[70] origin-left" style={{ scaleX }} />
 
       <div className="fixed top-0 left-0 w-full z-50 flex justify-center p-4 md:p-6 pointer-events-none">
@@ -86,16 +98,16 @@ const Navbar = () => {
         >
           {/* LEFT — LOGO */}
           <div className="flex-1 flex justify-start">
-            <motion.div 
+            <Link 
+              to="/"
               onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}
-              whileHover={{ scale: 1.02 }} 
-              className="cursor-pointer group"
+              className="cursor-pointer group no-underline"
             >
               <h1 className="text-xl md:text-2xl font-black tracking-tighter flex items-center gap-1 dark:text-white uppercase">
                 <span className="bg-red-600 text-white px-2 py-0.5 rounded italic group-hover:bg-red-700 transition-colors">S</span>
                 <span className="hidden sm:inline italic">WEAT<span className="text-red-600">BOX</span></span>
               </h1>
-            </motion.div>
+            </Link>
           </div>
 
           {/* CENTER — NAV LINKS */}
@@ -103,14 +115,13 @@ const Navbar = () => {
             <ul className="flex items-center gap-1 text-[11px] font-black uppercase tracking-[0.15em] dark:text-zinc-400 text-zinc-500">
               {navLinks.map((link) => (
                 <li key={link.name} className="relative px-4 py-2 cursor-pointer group">
-                  <a 
-                    href={link.href} 
-                    onClick={(e) => { e.preventDefault(); scrollToSection(link.href); }}
-                    className={`transition-colors duration-300 ${activeSection === link.id ? "text-red-600" : "hover:text-black dark:hover:text-white"}`}
+                  <Link 
+                    to={link.href}
+                    className={`transition-colors duration-300 ${location.pathname === link.href ? "text-red-600" : "hover:text-black dark:hover:text-white"}`}
                   >
                     {link.name}
-                  </a>
-                  {activeSection === link.id && (
+                  </Link>
+                  {location.pathname === link.href && (
                     <motion.span 
                       layoutId="activeTab"
                       className="absolute bottom-0 left-0 w-full h-[2px] bg-red-600"
@@ -164,8 +175,12 @@ const Navbar = () => {
               {theme === "dark" ? <Sun size={18} strokeWidth={2.5} /> : <Moon size={18} strokeWidth={2.5} />}
             </button>
 
+            <Link to="/login" className="hidden xl:block text-[10px] font-black uppercase tracking-widest dark:text-zinc-500 hover:text-red-600 transition-colors mr-2">
+              Login
+            </Link>
+
             <motion.button
-              onClick={() => scrollToSection('#contact')}
+              onClick={() => navigate('/contact')}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="hidden sm:flex bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] items-center gap-2 shadow-lg shadow-red-600/20"
@@ -174,7 +189,7 @@ const Navbar = () => {
             </motion.button>
 
             {/* HAMBURGER TRIGGER */}
-            <button className="lg:hidden dark:text-white p-2 relative z-50" onClick={() => setMenuOpen(true)}>
+            <button className="lg:hidden dark:text-white p-2 relative z-50 pointer-events-auto" onClick={() => setMenuOpen(true)}>
               <Menu size={24} />
             </button>
           </div>
@@ -185,22 +200,15 @@ const Navbar = () => {
       <AnimatePresence>
         {menuOpen && (
           <>
-            {/* Dark Overlay Backdrop */}
             <motion.div 
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               onClick={() => setMenuOpen(false)}
-              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] lg:hidden"
+              className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] lg:hidden pointer-events-auto"
             />
-            
-            {/* Sidebar Drawer */}
             <motion.div 
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
+              initial={{ x: "100%" }} animate={{ x: 0 }} exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed top-0 right-0 h-full w-[300px] bg-zinc-50 dark:bg-zinc-950 z-[110] lg:hidden p-8 flex flex-col shadow-2xl border-l border-zinc-200 dark:border-white/10"
+              className="fixed top-0 right-0 h-full w-[300px] bg-zinc-50 dark:bg-zinc-950 z-[110] lg:hidden p-8 flex flex-col shadow-2xl border-l border-zinc-200 dark:border-white/10 pointer-events-auto"
             >
               <div className="flex justify-between items-center mb-12">
                 <span className="font-black text-[10px] uppercase tracking-widest text-zinc-400">Navigation</span>
@@ -213,35 +221,35 @@ const Navbar = () => {
                 {navLinks.map((link) => (
                   <button
                     key={link.name}
-                    onClick={() => scrollToSection(link.href)}
+                    onClick={() => handleNavClick(link.href)}
                     className={`text-left text-3xl font-black uppercase italic tracking-tighter transition-colors ${
-                      activeSection === link.id ? "text-red-600" : "text-zinc-800 dark:text-white"
+                      location.pathname === link.href ? "text-red-600" : "text-zinc-800 dark:text-white"
                     }`}
                   >
                     {link.name}
                   </button>
                 ))}
+                <Link 
+                  to="/login" 
+                  onClick={() => setMenuOpen(false)}
+                  className="text-left text-3xl font-black uppercase italic tracking-tighter text-zinc-400"
+                >
+                  Admin
+                </Link>
               </nav>
 
-              {/* SOCIAL MEDIA SECTION */}
               <div className="mt-12 pt-8 border-t border-zinc-200 dark:border-white/5">
                 <p className="font-black text-[10px] uppercase tracking-widest text-zinc-400 mb-6">Follow the hustle</p>
                 <div className="flex gap-4">
-                  <a href="#" className="p-3 rounded-full bg-zinc-100 dark:bg-white/5 dark:text-white hover:text-red-600 transition-colors">
-                    <Instagram size={20} />
-                  </a>
-                  <a href="#" className="p-3 rounded-full bg-zinc-100 dark:bg-white/5 dark:text-white hover:text-red-600 transition-colors">
-                    <Twitter size={20} />
-                  </a>
-                  <a href="#" className="p-3 rounded-full bg-zinc-100 dark:bg-white/5 dark:text-white hover:text-red-600 transition-colors">
-                    <Youtube size={20} />
-                  </a>
+                  <a href="#" className="p-3 rounded-full bg-zinc-100 dark:bg-white/5 dark:text-white hover:text-red-600 transition-colors"><Instagram size={20} /></a>
+                  <a href="#" className="p-3 rounded-full bg-zinc-100 dark:bg-white/5 dark:text-white hover:text-red-600 transition-colors"><Twitter size={20} /></a>
+                  <a href="#" className="p-3 rounded-full bg-zinc-100 dark:bg-white/5 dark:text-white hover:text-red-600 transition-colors"><Youtube size={20} /></a>
                 </div>
               </div>
 
               <div className="mt-auto">
                 <button 
-                  onClick={() => scrollToSection('#contact')}
+                  onClick={() => handleNavClick('/contact')}
                   className="w-full bg-red-600 py-4 rounded-xl text-white font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 group"
                 >
                   Join the Forge <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
