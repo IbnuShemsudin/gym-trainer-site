@@ -30,7 +30,8 @@ const plans = [
 
 const Pricing = () => {
   return (
-    <section className="py-24 px-6 bg-zinc-50 dark:bg-zinc-950 transition-colors duration-500">
+    /* Change 1: Removed bg-zinc-50 and added bg-transparent to let the App.jsx black show through */
+    <section id="pricing" className="py-24 px-6 bg-transparent transition-colors duration-500">
       <div className="max-w-7xl mx-auto">
         
         {/* Header */}
@@ -56,10 +57,11 @@ const Pricing = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
               viewport={{ once: true }}
+              /* Change 2: Updated card colors for true black backgrounds */
               className={`relative p-8 rounded-[2.5rem] border transition-all duration-500 ${
                 plan.recommended 
-                ? "bg-white dark:bg-zinc-900 border-red-600 shadow-2xl scale-105 z-10 py-12" 
-                : "bg-white/50 dark:bg-zinc-900/40 border-zinc-200 dark:border-white/5 shadow-xl"
+                ? "bg-white dark:bg-zinc-900 border-red-600 shadow-[0_20px_50px_rgba(220,38,38,0.2)] scale-105 z-10 py-12" 
+                : "bg-white/80 dark:bg-zinc-950/50 border-zinc-200 dark:border-white/5 shadow-xl backdrop-blur-sm"
               }`}
             >
               {plan.recommended && (
@@ -100,7 +102,8 @@ const Pricing = () => {
                 className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
                   plan.recommended 
                   ? "bg-red-600 text-white shadow-xl shadow-red-600/30 hover:bg-red-700" 
-                  : "bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-red-600 dark:hover:bg-red-600 dark:hover:text-white"
+                  /* Change 3: Dark mode button text/bg tweaks */
+                  : "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-red-600 dark:hover:bg-red-600 dark:hover:text-white"
                 }`}
               >
                 Choose Plan <ArrowRight size={16} />
