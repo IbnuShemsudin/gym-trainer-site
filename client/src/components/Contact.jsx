@@ -1,186 +1,201 @@
-import { useState, useRef } from "react";
+import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, CheckCircle, Mail, User, Target, AlertCircle, Phone } from "lucide-react";
-import Toast from "./Toast"; // Ensure you created this file!
+import { ArrowRight, Check, Loader2 } from "lucide-react";
 
 const Contact = () => {
-  const form = useRef();
-  const [status, setStatus] = useState("idle"); // idle, sending, success, error
-  const [showToast, setShowToast] = useState(false);
-  const [toastConfig, setToastConfig] = useState({ message: "", type: "" });
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    program: "Personal Training",
+  });
+
+  const [status, setStatus] = useState({
+    loading: false,
+    success: false,
+    error: null,
+  });
+
+  const handleChange = useCallback((e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setStatus("sending");
+    if (status.loading) return;
 
-    const formData = new FormData(form.current);
-    
-    // Mapped to match your MongoDB Schema exactly
-    const data = {
-      name: formData.get("from_name"),
-      email: formData.get("from_email"),
-      phone: formData.get("from_phone"), // Now included to satisfy the backend
-      program: formData.get("message"),
-    };
+    setStatus({ loading: true, success: false, error: null });
 
     try {
-      const response = await fetch("http://localhost:5000/api/leads", {
+      const res = await fetch("http://localhost:5000/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(formData),
       });
 
-      const result = await response.json();
+      const data = await res.json();
 
-      if (response.ok) {
-        setStatus("success");
-        setToastConfig({ 
-          message: "Welcome to the Forge! We'll call you shortly.", 
-          type: "success" 
-        });
-        setShowToast(true);
-        form.current.reset();
-      } else {
-        throw new Error(result.error || "Submission failed");
-      }
-    } catch (error) {
-      console.error("Backend Error:", error);
-      setStatus("error");
-      setToastConfig({ 
-        message: "Validation Error: Please check your details.", 
-        type: "error" 
-      });
-      setShowToast(true);
+      if (!res.ok) throw new Error(data?.error || "Submission failed");
+
+      setStatus({ loading: false, success: true, error: null });
+      setFormData({ name: "", email: "", phone: "", program: "Personal Training" });
+
+      setTimeout(() => setStatus((prev) => ({ ...prev, success: false })), 5000);
+    } catch (err) {
+      setStatus({ loading: false, success: false, error: err.message || "Network error" });
     }
-
-    // Auto-hide toast
-    setTimeout(() => setShowToast(false), 6000);
-    setTimeout(() => setStatus("idle"), 2000);
   };
 
   return (
-    <section id="contact" className="py-32 px-6 bg-black relative overflow-hidden">
-      <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
-        
-        {/* Left Side: Branding */}
-        <motion.div
-          initial={{ opacity: 0, x: -30 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-        >
-          <div className="inline-block px-4 py-1.5 mb-6 rounded-full border border-red-600/30 bg-red-600/10">
-            <span className="text-red-500 text-[10px] font-black uppercase tracking-[0.3em]">Join The Forge</span>
-          </div>
-          <h2 className="text-6xl md:text-8xl font-black uppercase italic tracking-tighter text-white leading-[0.85]">
-            Ready to <br /><span className="text-red-600">Transform?</span>
-          </h2>
-          <p className="mt-8 text-zinc-400 max-w-md text-lg font-medium leading-relaxed">
-            Stop making excuses. Leave your details and our lead trainer will reach out to design your custom roadmap to power.
-          </p>
+    <section id="contact" className="relative py-32 bg-zinc-950 flex items-center justify-center overflow-hidden">
+      
+      {/* MASSIVE BACKGROUND WATERMARK */}
+      <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none overflow-hidden">
+        <h1 className="text-[25vw] font-black text-white/[0.02] leading-none uppercase italic tracking-tighter">
+          ELITE
+        </h1>
+      </div>
+
+      <div className="max-w-6xl w-full mx-auto px-6 relative z-10">
+        <div className="bg-black border-[3px] border-white/10 rounded-[3rem] overflow-hidden shadow-[0_0_100px_rgba(0,0,0,1)] flex flex-col lg:flex-row">
           
-          <div className="mt-12 space-y-6">
-            <div className="flex items-center gap-4 group">
-              <div className="w-12 h-12 rounded-2xl bg-zinc-900 border border-white/5 flex items-center justify-center group-hover:border-red-600/50 transition-colors">
-                <Mail size={20} className="text-red-600" />
-              </div>
+          {/* LEFT: BRANDING PANEL */}
+          <div className="lg:w-2/5 bg-zinc-900/50 backdrop-blur-xl p-12 lg:p-16 flex flex-col justify-between border-r-[3px] border-white/5">
+            <div>
+              <p className="text-red-600 font-black tracking-[0.5em] text-[14px] uppercase mb-8">
+                Join the Forge
+              </p>
+              <h2 className="text-6xl md:text-7xl font-black text-white leading-[0.85] uppercase italic tracking-tighter mb-4">
+                No <br />
+                <span className="text-red-600">Limits.</span>
+              </h2>
+              <p className="text-zinc-500 font-bold uppercase tracking-widest text-xs mt-4">
+                Only Results.
+              </p>
+            </div>
+
+            <div className="mt-20 space-y-12">
               <div>
-                <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest">Email Us</p>
-                <p className="text-white font-bold tracking-tight">hello@thesweatbox.com</p>
+                <h4 className="text-white text-sm font-black uppercase tracking-widest mb-4 border-l-4 border-red-600 pl-4">
+                  HQ Location
+                </h4>
+                <p className="text-zinc-400 text-lg font-bold">
+                  Addis Ababa, Ethiopia <br />
+                  Elite Forge District
+                </p>
+              </div>
+
+              <div>
+                <h4 className="text-white text-sm font-black uppercase tracking-widest mb-4 border-l-4 border-red-600 pl-4">
+                  Direct Line
+                </h4>
+                <p className="text-zinc-400 text-lg font-bold">
+                  training@ethiofit.com <br />
+                  +251 900 000 000
+                </p>
               </div>
             </div>
           </div>
-        </motion.div>
 
-        {/* Right Side: Pro Form */}
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.95 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true }}
-          className="relative"
-        >
-          <div className="absolute -inset-4 bg-red-600/10 blur-[100px] rounded-full pointer-events-none" />
-
-          <div className="relative bg-zinc-900/40 backdrop-blur-2xl p-8 md:p-10 rounded-[2.5rem] border border-white/10 shadow-3xl">
-            <form ref={form} onSubmit={handleSubmit} className="space-y-5">
+          {/* RIGHT: THE FORM */}
+          <div className="lg:w-3/5 p-12 lg:p-20">
+            <form onSubmit={handleSubmit} className="space-y-14" noValidate>
               
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">
-                  <User size={12} /> Full Name
-                </label>
-                <input 
-                  type="text" name="from_name" required
-                  className="w-full bg-black/50 border border-white/5 rounded-2xl p-4 focus:ring-1 ring-red-600 outline-none text-white transition-all placeholder:text-zinc-700"
-                  placeholder="e.g. Elias Daniel"
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-14">
+                {/* NAME */}
+                <div className="relative group">
+                  <input
+                    id="name" name="name" type="text" required
+                    value={formData.name} onChange={handleChange}
+                    className="w-full bg-transparent border-b-[3px] border-zinc-800 py-4 text-white text-2xl font-black outline-none focus:border-red-600 transition-all peer placeholder-transparent"
+                    placeholder=" "
+                  />
+                  <label htmlFor="name" className="absolute left-0 top-4 text-zinc-600 uppercase text-xs tracking-[0.3em] font-black pointer-events-none transition-all peer-focus:-top-8 peer-focus:text-red-600 peer-[:not(:placeholder-shown)]:-top-8">
+                    Full Name
+                  </label>
+                </div>
+
+                {/* PHONE */}
+                <div className="relative group">
+                  <input
+                    id="phone" name="phone" type="tel"
+                    value={formData.phone} onChange={handleChange}
+                    className="w-full bg-transparent border-b-[3px] border-zinc-800 py-4 text-white text-2xl font-black outline-none focus:border-red-600 transition-all peer placeholder-transparent"
+                    placeholder=" "
+                  />
+                  <label htmlFor="phone" className="absolute left-0 top-4 text-zinc-600 uppercase text-xs tracking-[0.3em] font-black pointer-events-none transition-all peer-focus:-top-8 peer-focus:text-red-600 peer-[:not(:placeholder-shown)]:-top-8">
+                    Phone Number
+                  </label>
+                </div>
+              </div>
+
+              {/* EMAIL */}
+              <div className="relative group">
+                <input
+                  id="email" name="email" type="email" required
+                  value={formData.email} onChange={handleChange}
+                  className="w-full bg-transparent border-b-[3px] border-zinc-800 py-4 text-white text-2xl font-black outline-none focus:border-red-600 transition-all peer placeholder-transparent"
+                  placeholder=" "
                 />
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">
-                    <Mail size={12} /> Email Address
-                  </label>
-                  <input 
-                    type="email" name="from_email" required
-                    className="w-full bg-black/50 border border-white/5 rounded-2xl p-4 focus:ring-1 ring-red-600 outline-none text-white transition-all placeholder:text-zinc-700"
-                    placeholder="your@email.com"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">
-                    <Phone size={12} /> Phone Number
-                  </label>
-                  <input 
-                    type="tel" name="from_phone" required
-                    className="w-full bg-black/50 border border-white/5 rounded-2xl p-4 focus:ring-1 ring-red-600 outline-none text-white transition-all placeholder:text-zinc-700"
-                    placeholder="+251..."
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500 ml-1">
-                  <Target size={12} /> Your Primary Goal
+                <label htmlFor="email" className="absolute left-0 top-4 text-zinc-600 uppercase text-xs tracking-[0.3em] font-black pointer-events-none transition-all peer-focus:-top-8 peer-focus:text-red-600 peer-[:not(:placeholder-shown)]:-top-8">
+                  Email Address
                 </label>
-                <textarea 
-                  name="message" required rows="2"
-                  className="w-full bg-black/50 border border-white/5 rounded-2xl p-4 focus:ring-1 ring-red-600 outline-none text-white transition-all placeholder:text-zinc-700 resize-none"
-                  placeholder="Hypertrophy, Endurance, Weight Loss..."
-                ></textarea>
               </div>
 
-              <motion.button 
-                type="submit"
-                disabled={status === "sending"}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
-                className={`w-full py-5 rounded-2xl font-black uppercase tracking-[0.3em] text-[11px] flex items-center justify-center gap-3 transition-all ${
-                  status === "success" 
-                  ? "bg-green-600" 
-                  : status === "error"
-                  ? "bg-zinc-800"
-                  : "bg-red-600 hover:bg-red-700"
-                } text-white`}
-              >
-                {status === "idle" && <><Send size={16}/> Claim Your Spot</>}
-                {status === "sending" && "Connecting to Server..."}
-                {status === "success" && <><CheckCircle size={16}/> Applied Successfully</>}
-                {status === "error" && <><AlertCircle size={16}/> Form Incomplete</>}
-              </motion.button>
+              {/* PROGRAM SELECT */}
+              <div className="space-y-8">
+                <label className="block text-zinc-400 uppercase text-xs tracking-[0.3em] font-black">
+                  Select Your Protocol
+                </label>
+
+                <div className="flex flex-wrap gap-4">
+                  {["Personal Training", "Group Classes", "Bodybuilding", "Weight Loss"].map((p) => (
+                    <button
+                      key={p} type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, program: p }))}
+                      className={`px-10 py-4 rounded-2xl border-[3px] text-[13px] font-black uppercase tracking-widest transition-all ${
+                        formData.program === p
+                          ? "bg-red-600 text-white border-red-600 shadow-[0_10px_30px_rgba(220,38,38,0.5)] scale-105"
+                          : "bg-transparent text-zinc-600 border-zinc-800 hover:border-zinc-500"
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* SUBMIT */}
+              <div className="pt-10">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  disabled={status.loading}
+                  type="submit"
+                  className="w-full group relative bg-red-600 py-8 rounded-3xl overflow-hidden shadow-[0_20px_50px_rgba(220,38,38,0.3)] disabled:opacity-50 transition-all"
+                >
+                  {/* Subtle hover sweep effect */}
+                  <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700 skew-x-12" />
+                  
+                  <div className="flex items-center justify-center gap-6">
+                    <span className="text-white uppercase text-xl font-black tracking-[0.4em]">
+                      {status.loading ? "Processing" : status.success ? "Verified" : "Start Protocol"}
+                    </span>
+                    {status.loading ? (
+                      <Loader2 size={28} className="animate-spin text-white" />
+                    ) : status.success ? (
+                      <Check size={28} className="text-white" />
+                    ) : (
+                      <ArrowRight size={28} className="text-white group-hover:translate-x-3 transition-transform" />
+                    )}
+                  </div>
+                </motion.button>
+              </div>
             </form>
           </div>
-        </motion.div>
+        </div>
       </div>
-
-      {/* Toast Notification Mount Point */}
-      <AnimatePresence>
-        {showToast && (
-          <Toast 
-            message={toastConfig.message} 
-            type={toastConfig.type} 
-            onClose={() => setShowToast(false)} 
-          />
-        )}
-      </AnimatePresence>
     </section>
   );
 };
