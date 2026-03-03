@@ -1,22 +1,31 @@
 @import "tailwindcss";
 
-/* Force the root and body to be pure black */
-html, 
-body, 
-#root {
-  background-color: #000000 !important;
-  color: #ffffff;
-  margin: 0;
-  padding: 0;
-  min-height: 100vh;
+/* 1. Define the custom variant for class-based toggling */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  /* You can define custom colors here if needed */
 }
 
-/* Ensure Tailwind's dark mode class also stays black */
-.dark body {
-  background-color: #000000 !important;
-}
+/* 2. Set base styles that respond to the dark class */
+@layer base {
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    /* Default (Light Mode) colors */
+    background-color: #ffffff;
+    color: #000000;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
 
-/* Remove any white backgrounds from sections globally */
-section {
-  background-color: transparent !important;
+  /* When the .dark class is present on <html> */
+  .dark {
+    background-color: #000000;
+    color: #ffffff;
+  }
+  
+  .dark body {
+    background-color: #000000;
+  }
 }

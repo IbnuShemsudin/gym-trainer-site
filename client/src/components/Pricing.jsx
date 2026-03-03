@@ -1,40 +1,64 @@
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Check, Zap, Crown, Star, ArrowRight } from "lucide-react";
+import { Check, Zap, Crown, Star, ArrowRight, Loader2 } from "lucide-react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
-const plans = [
-  {
-    name: "Starter",
-    price: "1,500",
-    description: "Perfect for casual trainers",
-    features: ["Access to Gym Floor", "Locker Room & Showers", "2 Group Classes/Mo", "Mobile App Access"],
-    icon: <Star className="text-zinc-400" />,
-    recommended: false,
-  },
-  {
-    name: "Pro",
-    price: "2,800",
-    description: "Most popular for results",
-    features: ["Everything in Starter", "Unlimited Group Classes", "1 PT Consultation/Mo", "Sauna & Steam Access", "Free Guest Pass (1/Mo)"],
-    icon: <Zap className="text-red-600" />,
-    recommended: true,
-  },
-  {
-    name: "Elite",
-    price: "5,000",
-    description: "For the dedicated athlete",
-    features: ["Everything in Pro", "Weekly Personal Training", "Nutrition Coaching", "Recovery Zone Access", "Exclusive EthioFit Gear"],
-    icon: <Crown className="text-amber-500" />,
-    recommended: false,
-  },
-];
+// Pass setSelectedPlan (from App.jsx) as a prop
+const Pricing = ({ setSelectedPlan }) => { 
+  const [plans, setPlans] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate(); // Initialize navigate
 
-const Pricing = () => {
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/api/pricing");
+        const result = await response.json();
+
+        if (result.success) {
+          const formattedPlans = result.data.map((plan, index) => ({
+            ...plan,
+            icon: index === 0 ? <Star className="text-zinc-400" /> : 
+                  index === 1 ? <Zap className="text-red-600" /> : 
+                  <Crown className="text-amber-500" />,
+            recommended: index === 1,
+            description: plan.description || "Ethio Fit Premium Tier"
+          }));
+          setPlans(formattedPlans);
+        }
+      } catch (error) {
+        console.error("Error fetching pricing:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPlans();
+  }, []);
+
+  // --- UPDATED SELECTION LOGIC FOR MULTI-PAGE ---
+  const handleSelectPlan = (planName) => {
+    // 1. Update the global state in App.jsx
+    if (setSelectedPlan) {
+      setSelectedPlan(planName);
+    }
+    
+    // 2. Since Contact is a different page, navigate to it
+    navigate("/contact");
+  };
+
+  if (loading) {
+    return (
+      <div className="py-24 flex flex-col items-center justify-center bg-zinc-50 dark:bg-zinc-950">
+        <Loader2 className="animate-spin text-red-600 mb-4" size={40} />
+        <p className="text-zinc-500 font-bold uppercase tracking-widest text-xs">Loading Plans...</p>
+      </div>
+    );
+  }
+
   return (
-    /* Change 1: Removed bg-zinc-50 and added bg-transparent to let the App.jsx black show through */
-    <section id="pricing" className="py-24 px-6 bg-transparent transition-colors duration-500">
+    <section id="pricing" className="py-24 px-6 bg-zinc-50 dark:bg-zinc-950 transition-colors duration-500">
       <div className="max-w-7xl mx-auto">
         
-        {/* Header */}
         <div className="text-center mb-16">
           <motion.h2 
             initial={{ opacity: 0, y: 20 }}
@@ -48,20 +72,18 @@ const Pricing = () => {
           </h1>
         </div>
 
-        {/* Pricing Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
           {plans.map((plan, i) => (
             <motion.div
-              key={i}
+              key={plan._id || i}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
               viewport={{ once: true }}
-              /* Change 2: Updated card colors for true black backgrounds */
               className={`relative p-8 rounded-[2.5rem] border transition-all duration-500 ${
                 plan.recommended 
-                ? "bg-white dark:bg-zinc-900 border-red-600 shadow-[0_20px_50px_rgba(220,38,38,0.2)] scale-105 z-10 py-12" 
-                : "bg-white/80 dark:bg-zinc-950/50 border-zinc-200 dark:border-white/5 shadow-xl backdrop-blur-sm"
+                ? "bg-white dark:bg-zinc-900 border-red-600 shadow-2xl scale-105 z-10 py-12" 
+                : "bg-white/50 dark:bg-zinc-900/40 border-zinc-200 dark:border-white/5 shadow-xl"
               }`}
             >
               {plan.recommended && (
@@ -80,7 +102,9 @@ const Pricing = () => {
 
               <div className="mb-8">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-black dark:text-white text-zinc-900">{plan.price}</span>
+                  <span className="text-4xl font-black dark:text-white text-zinc-900">
+                    {Number(plan.amount || plan.price).toLocaleString()}
+                  </span>
                   <span className="text-zinc-500 font-bold uppercase text-xs">ETB / Mo</span>
                 </div>
               </div>
@@ -97,13 +121,13 @@ const Pricing = () => {
               </ul>
 
               <motion.button
+                onClick={() => handleSelectPlan(plan.name)} 
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
                   plan.recommended 
                   ? "bg-red-600 text-white shadow-xl shadow-red-600/30 hover:bg-red-700" 
-                  /* Change 3: Dark mode button text/bg tweaks */
-                  : "bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 hover:bg-red-600 dark:hover:bg-red-600 dark:hover:text-white"
+                  : "bg-zinc-900 dark:bg-white text-white dark:text-black hover:bg-red-600 dark:hover:bg-red-600 dark:hover:text-white"
                 }`}
               >
                 Choose Plan <ArrowRight size={16} />
@@ -112,7 +136,6 @@ const Pricing = () => {
           ))}
         </div>
 
-        {/* Note */}
         <p className="text-center mt-12 text-zinc-500 text-xs font-bold uppercase tracking-widest">
           * All plans include a one-time 500 ETB registration fee.
         </p>

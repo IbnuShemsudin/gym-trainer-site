@@ -6,81 +6,137 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken'); 
 
 // 1. IMPORT MODELS & MIDDLEWARE
-// Ensure these paths are 100% correct relative to this server.js file
 const Lead = require('./src/models/Lead');
 const User = require('./src/models/User'); 
 const Gallery = require('./src/models/Gallery');
+const Pricing = require('./src/models/Pricing');
 const auth = require('./src/middleware/auth');
 
 const app = express();
 
 // 2. MIDDLEWARE
 app.use(cors());
-app.use(express.json()); // Parses incoming JSON. Essential for req.body.
+app.use(express.json()); 
 
 // 3. ROUTES
-
-// System Health Check
 app.get('/', (req, res) => res.send('Ethio Fit API: System Online'));
 
 /**
+ * @route   POST /api/auth/register
+ */
+app.post('/api/auth/register', async (req, res) => {
+    try {
+        const { name, email, password, roleRequest, adminSecret } = req.body;
+        
+        if (!name || !email || !password) {
+            return res.status(400).json({ success: false, message: "All fields are required" });
+        }
+        
+        let user = await User.findOne({ email });
+        if (user) {
+            return res.status(400).json({ success: false, message: "User already exists" });
+        }
+
+        let assignedRole = 'client';
+        if (roleRequest === 'admin') {
+            if (adminSecret !== process.env.ADMIN_SECRET_KEY) {
+                return res.status(403).json({ success: false, message: "Invalid Admin Secret Key" });
+            }
+            assignedRole = 'admin';
+        }
+
+        user = new User({ 
+            name, 
+            email, 
+            password, 
+            role: assignedRole 
+        });
+
+        const salt = await bcrypt.genSalt(10);
+        user.password = await bcrypt.hash(password, salt);
+        await user.save();
+        
+        res.status(201).json({ success: true, message: "Account authorized and created.", role: user.role });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});
+
+/**
  * @route   POST /api/auth/login
- * @desc    Authenticate admin & return token
  */
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-
         const user = await User.findOne({ email });
-        if (!user) {
-            return res.status(400).json({ success: false, message: "Invalid Credentials" });
-        }
+        if (!user) return res.status(400).json({ success: false, message: "Invalid Credentials" });
 
         const isMatch = await bcrypt.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(400).json({ success: false, message: "Invalid Credentials" });
-        }
+        if (!isMatch) return res.status(400).json({ success: false, message: "Invalid Credentials" });
 
-        // Payload structure must match what 'auth' middleware expects
-        const payload = {
-            user: { id: user._id }
+        const payload = { 
+            user: { 
+                id: user._id,
+                role: user.role 
+            } 
         };
 
-        const token = jwt.sign(
-            payload, 
-            process.env.JWT_SECRET, 
-            { expiresIn: '12h' }
-        );
-
-        res.json({ success: true, token });
-
+        const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '12h' });
+        
+        res.json({ 
+            success: true, 
+            token, 
+            role: user.role, 
+            name: user.name 
+        });
     } catch (err) {
-        console.error("Login Error:", err.message);
-        res.status(500).json({ success: false, error: "Internal Server Error" });
+        res.status(400).json({ success: false, error: err.message });
     }
 });
 
 /**
- * @route   GET /api/leads
- * @desc    Fetch all leads (Protected)
+ * @route   PUT /api/auth/profile
+ * @desc    Update admin profile (name/password)
+ * @access  Private
  */
-app.get('/api/leads', auth, async (req, res) => {
+app.put('/api/auth/profile', auth, async (req, res) => {
     try {
-        // req.user comes from the 'auth' middleware
-        console.log(`User ${req.user.id} is fetching leads...`);
-        
-        const leads = await Lead.find().sort({ createdAt: -1 });
-        res.json({ success: true, count: leads.length, data: leads });
+        const { name, password } = req.body;
+        // User ID is extracted from token by the 'auth' middleware
+        const user = await User.findById(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: "User not found" });
+        }
+
+        if (name) user.name = name;
+
+        if (password) {
+            const salt = await bcrypt.genSalt(10);
+            user.password = await bcrypt.hash(password, salt);
+        }
+
+        await user.save();
+        res.json({ 
+            success: true, 
+            message: "Profile updated successfully",
+            name: user.name 
+        });
     } catch (err) {
-        console.error("GET /api/leads Error:", err.message);
         res.status(500).json({ success: false, error: err.message });
     }
 });
 
-/**
- * @route   POST /api/leads
- * @desc    Public submission from contact form
- */
+// --- LEADS MANAGEMENT ---
+app.get('/api/leads', auth, async (req, res) => {
+    try {
+        const leads = await Lead.find().sort({ createdAt: -1 });
+        res.json({ success: true, count: leads.length, data: leads });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 app.post('/api/leads', async (req, res) => {
     try {
         const { name, email, phone, program } = req.body;
@@ -88,36 +144,76 @@ app.post('/api/leads', async (req, res) => {
         await newLead.save();
         res.status(201).json({ success: true, message: 'Lead captured successfully' });
     } catch (err) {
-        console.error("POST /api/leads Error:", err.message);
         res.status(400).json({ success: false, error: err.message });
     }
 });
 
-/**
- * @route   DELETE /api/leads/:id
- * @desc    Remove a lead (Protected)
- */
 app.delete('/api/leads/:id', auth, async (req, res) => {
     try {
-        const lead = await Lead.findByIdAndDelete(req.params.id);
-        if (!lead) return res.status(404).json({ success: false, message: "Lead not found" });
+        await Lead.findByIdAndDelete(req.params.id);
         res.json({ success: true, message: "Lead permanently removed" });
     } catch (err) {
-        console.error("DELETE /api/leads Error:", err.message);
         res.status(500).json({ success: false, error: err.message });
     }
 });
 
-/**
- * @route   GET /api/gallery
- * @desc    Public route to fetch gallery images
- */
+// --- GALLERY MANAGEMENT ---
 app.get('/api/gallery', async (req, res) => {
     try {
-        const images = await Gallery.find();
+        const images = await Gallery.find().sort({ createdAt: -1 });
         res.json({ success: true, data: images });
     } catch (err) {
-        console.error("GET /api/gallery Error:", err.message);
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+app.post('/api/gallery', auth, async (req, res) => {
+    try {
+        const { title, url } = req.body;
+        const newImage = new Gallery({ title, url });
+        await newImage.save();
+        res.status(201).json({ success: true, data: newImage });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});
+
+app.delete('/api/gallery/:id', auth, async (req, res) => {
+    try {
+        await Gallery.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: "Asset purged from gallery" });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+// --- PRICING PROTOCOLS ---
+app.get('/api/pricing', async (req, res) => {
+    try {
+        const pricing = await Pricing.find().sort({ amount: 1 });
+        res.json({ success: true, data: pricing });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+app.post('/api/pricing', auth, async (req, res) => {
+    try {
+        const { name, amount, features } = req.body;
+        const featureArray = typeof features === 'string' ? features.split(',').map(f => f.trim()) : features;
+        const newPrice = new Pricing({ name, amount, features: featureArray });
+        await newPrice.save();
+        res.status(201).json({ success: true, data: newPrice });
+    } catch (err) {
+        res.status(400).json({ success: false, error: err.message });
+    }
+});
+
+app.delete('/api/pricing/:id', auth, async (req, res) => {
+    try {
+        await Pricing.findByIdAndDelete(req.params.id);
+        res.json({ success: true, message: "Price protocol deactivated" });
+    } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
 });
@@ -131,5 +227,5 @@ mongoose.connect(process.env.MONGO_URI)
     })
     .catch(err => {
         console.error('❌ Database Connection Error:', err.message);
-        process.exit(1); // Stop server if DB fails
+        process.exit(1);
     });
