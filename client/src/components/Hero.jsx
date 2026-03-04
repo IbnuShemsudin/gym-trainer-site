@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { Link } from "react-router-dom"; // 1. IMPORT LINK
 import { ArrowRight, Play, Users, Activity, ShieldCheck, ChevronUp } from "lucide-react";
 
 const Hero = () => {
@@ -67,14 +68,16 @@ const Hero = () => {
           </p>
 
           <div className="flex flex-wrap gap-5">
-            <motion.button 
-              onClick={() => scrollToSection("contact")}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="bg-red-600 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest flex items-center gap-3 shadow-xl shadow-red-600/40 hover:bg-red-700 transition-all"
-            >
-              Start Training <ArrowRight size={20} />
-            </motion.button>
+            {/* 2. WRAPPED IN LINK TO CONTACT PAGE */}
+            <Link to="/contact">
+              <motion.button 
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="bg-red-600 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest flex items-center gap-3 shadow-xl shadow-red-600/40 hover:bg-red-700 transition-all"
+              >
+                Start Training <ArrowRight size={20} />
+              </motion.button>
+            </Link>
             
             <button className="group flex items-center gap-4 text-zinc-900 dark:text-white font-bold uppercase tracking-widest text-sm">
               <span className="w-14 h-14 rounded-full border-2 border-zinc-200 dark:border-white/20 flex items-center justify-center group-hover:bg-red-600 group-hover:border-red-600 transition-all">

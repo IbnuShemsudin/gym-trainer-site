@@ -24,16 +24,17 @@ const Login = () => {
       const data = await res.json();
       
       if (res.ok && data.token) {
-        // --- UPDATED: STORE TOKEN AND ROLE ---
+        // --- SECURE DATA STORAGE ---
         localStorage.setItem("token", data.token);
-        localStorage.setItem("role", data.role); // 'admin' or 'client'
-        localStorage.setItem("userName", data.name);
+        localStorage.setItem("role", data.role); 
+        localStorage.setItem("userName", data.name || "Operator");
 
-        // --- DYNAMIC NAVIGATION ---
+        // --- INTELLIGENT ROUTING ---
         if (data.role === "admin") {
           navigate("/admin/dashboard");
         } else {
-          navigate("/"); // Clients go to the landing page
+          // Standard users land on their Personal Dashboard
+          navigate("/dashboard"); 
         }
       } else {
         setError(data.message || "Invalid Authorization Credentials");
@@ -47,9 +48,14 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#050505] relative overflow-hidden selection:bg-red-600 selection:text-white">
+      {/* Background Ambient Glow */}
       <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(220,38,38,0.08),transparent_50%)]" />
       
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="relative z-10 w-full max-w-[450px] px-6">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.95 }} 
+        animate={{ opacity: 1, scale: 1 }} 
+        className="relative z-10 w-full max-w-[450px] px-6"
+      >
         <div className="bg-zinc-900/40 backdrop-blur-3xl p-10 md:p-14 rounded-[3rem] border border-white/10 shadow-2xl">
           
           <div className="text-center mb-12">
@@ -57,9 +63,9 @@ const Login = () => {
               <Fingerprint size={32} strokeWidth={1.5} />
             </div>
             <h2 className="text-4xl font-black text-white italic uppercase tracking-tighter">
-              Admin <span className="text-red-600">Gate</span>
+              Identity <span className="text-red-600">Gate</span>
             </h2>
-            <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-[0.5em] mt-3">Identity Verification</p>
+            <p className="text-zinc-500 text-[9px] font-bold uppercase tracking-[0.5em] mt-3">Biometric Verification Required</p>
           </div>
 
           <form onSubmit={handleLogin} className="space-y-5">
@@ -93,19 +99,27 @@ const Login = () => {
 
             <AnimatePresence>
               {error && (
-                <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-3 text-red-500 text-[10px] font-bold uppercase tracking-widest bg-red-500/5 p-4 rounded-2xl border border-red-500/10">
+                <motion.div 
+                  initial={{ opacity: 0, y: -10 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  exit={{ opacity: 0, y: -10 }}
+                  className="flex items-center gap-3 text-red-500 text-[10px] font-bold uppercase tracking-widest bg-red-500/5 p-4 rounded-2xl border border-red-500/10"
+                >
                   <ShieldAlert size={16} /> {error}
                 </motion.div>
               )}
             </AnimatePresence>
 
-            <button disabled={isLoading} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] transition-all hover:bg-red-700 active:scale-[0.98] disabled:opacity-50">
+            <button 
+              disabled={isLoading} 
+              className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase tracking-[0.2em] text-[10px] transition-all hover:bg-red-700 active:scale-[0.98] disabled:opacity-50 shadow-xl shadow-red-600/20"
+            >
               {isLoading ? <Loader2 className="animate-spin mx-auto" size={20} /> : "Establish Connection"}
             </button>
           </form>
 
           <p className="text-center mt-10 text-zinc-600 text-[10px] font-bold uppercase tracking-widest">
-            No access? <Link to="/register" className="text-white hover:text-red-600 ml-1 underline decoration-red-600/30">Request Credentials</Link>
+            New Operator? <Link to="/register" className="text-white hover:text-red-600 ml-1 underline decoration-red-600/30">Request Access</Link>
           </p>
         </div>
       </motion.div>

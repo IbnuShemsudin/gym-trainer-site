@@ -20,8 +20,11 @@ import Pricing from "./components/Pricing";
 import Contact from "./components/Contact";
 import About from "./pages/About";
 import Services from "./pages/Services"; 
+import Terms from "./pages/Terms";
+import Privacy from "./pages/Privacy";
 
 import AdminDashboard from "./pages/AdminDashboard"; 
+import ClientDashboard from "./pages/ClientDashboard"; // NEW: PERSONAL DASHBOARD
 import Login from "./pages/Login";
 import Register from "./pages/Register"; 
 
@@ -129,8 +132,11 @@ function MainContent({ theme, setTheme, selectedPlan, setSelectedPlan }) {
   
   // Define layout constraints
   const isAdminPage = location.pathname.startsWith("/admin");
+  const isDashboard = location.pathname === "/dashboard";
   const isAuthPage = location.pathname === "/login" || location.pathname === "/register";
-  const hideNavFooter = isAdminPage || isAuthPage;
+  
+  // Hide Nav/Footer for Admin, Auth, and the clean Dashboard view
+  const hideNavFooter = isAdminPage || isAuthPage || isDashboard;
 
   return (
     <>
@@ -143,10 +149,31 @@ function MainContent({ theme, setTheme, selectedPlan, setSelectedPlan }) {
           
           {/* LANDING & GENERAL PAGES */}
           <Route path="/" element={<PageWrapper><Hero /><BrandTicker /><Trainers /></PageWrapper>} />
-          <Route path="/services" element={<PageWrapper><Services /></PageWrapper>} />
+          
+          {/* SECURE CLIENT ROUTES */}
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute>
+                <PageWrapper><ClientDashboard /></PageWrapper>
+              </ProtectedRoute>
+            } 
+          />
+
+          <Route 
+            path="/services" 
+            element={
+              <ProtectedRoute>
+                <PageWrapper><Services /></PageWrapper>
+              </ProtectedRoute>
+            } 
+          />
+
           <Route path="/programs" element={<PageWrapper><div className="pt-20"><Programs /></div></PageWrapper>} />
           <Route path="/about" element={<PageWrapper><div className="pt-20"><About /></div></PageWrapper>} />
           <Route path="/gallery" element={<PageWrapper><div className="pt-20"><Gallery /></div></PageWrapper>} />
+          <Route path="/privacy" element={<PageWrapper><Privacy /></PageWrapper>} />
+          <Route path="/terms" element={<PageWrapper><Terms /></PageWrapper>} />
           
           <Route path="/pricing" element={
             <PageWrapper>

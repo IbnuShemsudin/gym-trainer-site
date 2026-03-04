@@ -1,6 +1,9 @@
 import React, { useRef, useState } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "framer-motion";
-import { Dumbbell, Zap, Target, Users, ArrowRight } from "lucide-react";
+import { 
+  Dumbbell, Zap, Target, Users, ArrowRight, 
+  Flame, HeartPulse, Shield, Swords 
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 const programs = [
@@ -28,29 +31,29 @@ const programs = [
     icon: <Users size={32} />,
     color: "from-zinc-800 to-zinc-600",
   },
-   {
-    title: "Yoga & Mobility",
-    desc: "Improve flexibility, core strength, and mental clarity in our serene, light-filled studio.",
-    icon: <Target size={32} />,
-    color: "from-blue-600 to-cyan-500",
+  {
+    title: "Combat Ops",
+    desc: "Technical boxing and martial arts conditioning to sharpen reflexes and explosive power.",
+    icon: <Swords size={32} />,
+    color: "from-red-900 to-red-700",
   },
   {
-    title: "Personal Elite",
-    desc: "One-on-one tailored programming with Ethiopia’s top-tier certified personal trainers.",
-    icon: <Users size={32} />,
-    color: "from-zinc-800 to-zinc-600",
-  },
-   {
-    title: "Yoga & Mobility",
-    desc: "Improve flexibility, core strength, and mental clarity in our serene, light-filled studio.",
-    icon: <Target size={32} />,
-    color: "from-blue-600 to-cyan-500",
+    title: "Athletic Engine",
+    desc: "Sport-specific agility and speed drills used by pro athletes to dominate the field.",
+    icon: <Flame size={32} />,
+    color: "from-orange-500 to-red-500",
   },
   {
-    title: "Personal Elite",
-    desc: "One-on-one tailored programming with Ethiopia’s top-tier certified personal trainers.",
-    icon: <Users size={32} />,
-    color: "from-zinc-800 to-zinc-600",
+    title: "Recovery Lab",
+    desc: "Scientific down-regulation including percussion therapy and guided compression sessions.",
+    icon: <Shield size={32} />,
+    color: "from-emerald-600 to-teal-500",
+  },
+  {
+    title: "Cardio Protocol",
+    desc: "Advanced respiratory training using state-of-the-art metrics to maximize VO2 Max.",
+    icon: <HeartPulse size={32} />,
+    color: "from-indigo-600 to-purple-600",
   },
 ];
 

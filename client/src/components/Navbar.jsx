@@ -56,29 +56,18 @@ const Navbar = () => {
     { name: "About", href: "/about", id: "about" },
   ];
 
-  const programs = [
-    { title: "Strength Training", desc: "Build elite muscle mass" },
-    { title: "HIIT Cardio", desc: "Burn fat in record time" },
-    { title: "Yoga & Flex", desc: "Recovery for athletes" },
-    { title: "Personal Coaching", desc: "1-on-1 expert guidance" },
+  const programsList = [
+    { title: "Strength Training", desc: "Build elite muscle mass", href: "/programs" },
+    { title: "HIIT Cardio", desc: "Burn fat in record time", href: "/programs" },
+    { title: "Yoga & Flex", desc: "Recovery for athletes", href: "/programs" },
+    { title: "Personal Coaching", desc: "1-on-1 expert guidance", href: "/programs" },
   ];
 
   // UPDATED: Now handles page navigation instead of smooth scrolling
   const handleNavClick = (href) => {
     setMenuOpen(false);
+    setActiveDropdown(false);
     navigate(href);
-  };
-
-  const scrollToSection = (id) => {
-    const element = document.querySelector(id);
-    if (element) {
-      const offset = 80;
-      const bodyRect = document.body.getBoundingClientRect().top;
-      const elementRect = element.getBoundingClientRect().top;
-      const elementPosition = elementRect - bodyRect;
-      const offsetPosition = elementPosition - offset;
-      window.scrollTo({ top: offsetPosition, behavior: "smooth" });
-    }
   };
 
   return (
@@ -104,8 +93,8 @@ const Navbar = () => {
               className="cursor-pointer group no-underline"
             >
               <h1 className="text-xl md:text-2xl font-black tracking-tighter flex items-center gap-1 dark:text-white uppercase">
-                <span className="bg-red-600 text-white px-2 py-0.5 rounded italic group-hover:bg-red-700 transition-colors">S</span>
-                <span className="hidden sm:inline italic">WEAT<span className="text-red-600">BOX</span></span>
+                <span className="bg-red-600 text-white px-2 py-0.5 rounded italic group-hover:bg-red-700 transition-colors">E</span>
+                <span className="hidden sm:inline italic">LITE<span className="text-red-600">FIT</span></span>
               </h1>
             </Link>
           </div>
@@ -138,7 +127,7 @@ const Navbar = () => {
                 onMouseLeave={() => setActiveDropdown(false)}
               >
                 <div className={`flex items-center gap-1 transition-colors ${activeDropdown ? "text-red-600" : ""}`}>
-                  Programs <ChevronDown size={12} className={`transition-transform duration-300 ${activeDropdown ? "rotate-180" : ""}`} />
+                  Explore <ChevronDown size={12} className={`transition-transform duration-300 ${activeDropdown ? "rotate-180" : ""}`} />
                 </div>
                 <AnimatePresence>
                   {activeDropdown && (
@@ -147,8 +136,12 @@ const Navbar = () => {
                       className="absolute top-full left-1/2 -translate-x-1/2 pt-4"
                     >
                       <div className="w-72 bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-white/10 rounded-2xl shadow-2xl p-2 overflow-hidden">
-                        {programs.map((prog) => (
-                          <div key={prog.title} className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-zinc-50 dark:hover:bg-white/5 transition-all">
+                        {programsList.map((prog) => (
+                          <div 
+                            key={prog.title} 
+                            onClick={() => handleNavClick(prog.href)}
+                            className="group/item flex items-start gap-3 p-3 rounded-xl hover:bg-zinc-50 dark:hover:bg-white/5 transition-all cursor-pointer"
+                          >
                             <div className="p-2 rounded-lg bg-red-600/10 text-red-600 group-hover/item:bg-red-600 group-hover/item:text-white transition-colors">
                               <Zap size={16} />
                             </div>
@@ -188,7 +181,6 @@ const Navbar = () => {
               Train Now
             </motion.button>
 
-            {/* HAMBURGER TRIGGER */}
             <button className="lg:hidden dark:text-white p-2 relative z-50 pointer-events-auto" onClick={() => setMenuOpen(true)}>
               <Menu size={24} />
             </button>

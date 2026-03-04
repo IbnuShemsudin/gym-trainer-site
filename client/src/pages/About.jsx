@@ -48,7 +48,7 @@ const About = () => {
             className="space-y-6"
           >
             <p className="text-xl text-zinc-400 leading-relaxed">
-              Founded in 2018, <span className="text-white font-bold">SWEATBOX</span> was built for those who refuse to settle for average. We aren't just a gym; we are a forge where discipline meets raw power.
+              Founded in 2018, <span className="text-white font-bold">ELITEFIT</span> was built for those who refuse to settle for average. We aren't just a gym; we are a forge where discipline meets raw power.
             </p>
             <p className="text-zinc-500">
               Our mission is to provide the elite environment, equipment, and coaching necessary to push human performance beyond perceived limits. Whether you're a pro athlete or a beginner with a warrior mindset, you belong here.

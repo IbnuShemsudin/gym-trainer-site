@@ -1,31 +1,64 @@
 @import "tailwindcss";
 
-/* 1. Define the custom variant for class-based toggling */
+/* 1. Define custom variant */
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
-  /* You can define custom colors here if needed */
+  /* Custom brand colors can go here */
 }
 
-/* 2. Set base styles that respond to the dark class */
+/* 2. Global Reset and Fixes */
 @layer base {
-  html, body {
+  html {
+    /* Explicitly set direction to prevent left-side scrollbars */
+    direction: ltr; 
+    /* Prevent horizontal overflow causing ghost scrollbars */
+    overflow-x: hidden;
+    scroll-behavior: smooth;
+  }
+
+  body {
     margin: 0;
     padding: 0;
     min-height: 100vh;
-    /* Default (Light Mode) colors */
+    /* Clean up the scrollbar appearance on the right */
+    overflow-x: hidden;
+    /* Light Mode Defaults */
     background-color: #ffffff;
     color: #000000;
     transition: background-color 0.3s ease, color 0.3s ease;
   }
 
-  /* When the .dark class is present on <html> */
+  /* 3. Dark Mode Refinement */
   .dark {
+    color-scheme: dark; /* Tells the browser to use dark-themed system UI/scrollbars */
     background-color: #000000;
     color: #ffffff;
   }
   
   .dark body {
     background-color: #000000;
+  }
+
+  /* 4. Scrollbar Aesthetics (Keeps it on the right and sleek) */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #27272a; /* Zinc-800 */
+    border-radius: 10px;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background: #3f3f46; /* Zinc-700 */
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #dc2626; /* Red-600 on hover */
   }
 }
