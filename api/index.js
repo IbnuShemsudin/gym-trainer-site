@@ -18,7 +18,27 @@ const app = express();
 app.use(cors());
 app.use(express.json()); 
 
-// 3. ROUTES
+// 3. DATABASE CONNECTION (Optimized for Serverless)
+// In Vercel, the connection should ideally be initiated outside the route handlers
+let isConnected = false;
+const connectDB = async () => {
+    if (isConnected) return;
+    try {
+        await mongoose.connect(process.env.MONGO_URI);
+        isConnected = true;
+        console.log('✅ Connected to MongoDB Atlas');
+    } catch (err) {
+        console.error('❌ Database Connection Error:', err.message);
+    }
+};
+
+// Middleware to ensure DB connection on every request
+app.use(async (req, res, next) => {
+    await connectDB();
+    next();
+});
+
+// 4. ROUTES
 app.get('/', (req, res) => res.send('Ethio Fit API: System Online'));
 
 /**
@@ -102,7 +122,6 @@ app.post('/api/auth/login', async (req, res) => {
 app.put('/api/auth/profile', auth, async (req, res) => {
     try {
         const { name, password } = req.body;
-        // User ID is extracted from token by the 'auth' middleware
         const user = await User.findById(req.user.id);
 
         if (!user) {
@@ -218,14 +237,11 @@ app.delete('/api/pricing/:id', auth, async (req, res) => {
     }
 });
 
-// 4. DATABASE & SERVER START
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => {
-        console.log('✅ Connected to MongoDB Atlas');
-        const PORT = process.env.PORT || 5000;
-        app.listen(PORT, () => console.log(`🚀 Elite Server running on port ${PORT}`));
-    })
-    .catch(err => {
-        console.error('❌ Database Connection Error:', err.message);
-        process.exit(1);
-    });
+// 5. START SERVER ONLY IN LOCAL DEVELOPMENT
+if (process.env.NODE_ENV !== 'production') {
+    const PORT = process.env.PORT || 5000;
+    app.listen(PORT, () => console.log(`🚀 Elite Server running locally on port ${PORT}`));
+}
+
+// 6. EXPORT APP (Essential for Vercel)
+module.exports = app;
