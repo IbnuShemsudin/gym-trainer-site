@@ -14,18 +14,21 @@ const auth = require('./src/middleware/auth');
 
 const app = express();
 
-// 2. MIDDLEWARE
-app.use(cors());
+// 2. MIDDLEWARE & CORS CONFIGURATION
+// Since deployments are separate, we must explicitly allow your frontend domain
+app.use(cors({
+    origin: ["https://ethiofit.vercel.app", "http://localhost:3000"], // Add your actual frontend Vercel URL here
+    methods: ["GET", "POST", "PUT", "DELETE"],
+    credentials: true
+}));
 app.use(express.json()); 
 
 // 3. DATABASE CONNECTION (Optimized for Serverless)
-// In Vercel, the connection should ideally be initiated outside the route handlers
-let isConnected = false;
 const connectDB = async () => {
-    if (isConnected) return;
+    if (mongoose.connection.readyState >= 1) return;
+    
     try {
         await mongoose.connect(process.env.MONGO_URI);
-        isConnected = true;
         console.log('✅ Connected to MongoDB Atlas');
     } catch (err) {
         console.error('❌ Database Connection Error:', err.message);
@@ -39,6 +42,8 @@ app.use(async (req, res, next) => {
 });
 
 // 4. ROUTES
+
+// Root Route - Good for health checks
 app.get('/', (req, res) => res.send('Ethio Fit API: System Online'));
 
 /**
@@ -78,7 +83,7 @@ app.post('/api/auth/register', async (req, res) => {
         
         res.status(201).json({ success: true, message: "Account authorized and created.", role: user.role });
     } catch (err) {
-        res.status(400).json({ success: false, error: err.message });
+        res.status(500).json({ success: false, error: err.message });
     }
 });
 
@@ -110,14 +115,12 @@ app.post('/api/auth/login', async (req, res) => {
             name: user.name 
         });
     } catch (err) {
-        res.status(400).json({ success: false, error: err.message });
+        res.status(500).json({ success: false, error: err.message });
     }
 });
 
 /**
  * @route   PUT /api/auth/profile
- * @desc    Update admin profile (name/password)
- * @access  Private
  */
 app.put('/api/auth/profile', auth, async (req, res) => {
     try {

@@ -16,12 +16,15 @@ const Register = () => {
     adminSecret: "" 
   });
 
-  // --- ADDED: DYNAMIC API URL LOGIC ---
+  // --- UPDATED: ABSOLUTE API URL LOGIC ---
   const getApiUrl = () => {
-    // If we are on localhost, use the local server. Otherwise, use relative path for Vercel.
-    return window.location.hostname === "localhost" 
-      ? "http://localhost:5000/api/auth/register" 
-      : "/api/auth/register";
+    // 1. Check if we are running locally
+    if (window.location.hostname === "localhost") {
+      return "http://localhost:5000/api/auth/register";
+    }
+    // 2. Separate Deployment: Point to your ACTUAL backend Vercel URL
+    // REPLACE 'https://your-api-domain.vercel.app' with your real backend link
+    return "https://ethiofit-api.vercel.app/api/auth/register";
   };
 
   const handleRegister = async (e) => {
@@ -35,12 +38,17 @@ const Register = () => {
         roleRequest: isAdminMode ? "admin" : "client"
       };
 
-      // UPDATED: Now uses the dynamic URL
       const res = await fetch(getApiUrl(), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+
+      // Handle cases where the response might not be JSON (like a 404 HTML page)
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Server returned non-JSON response. Check your API URL.");
+      }
 
       const data = await res.json();
 
@@ -50,7 +58,7 @@ const Register = () => {
         setError(data.message || "Registration Denied.");
       }
     } catch (err) {
-      // If the fetch fails completely (network error), this block runs
+      console.error("Registration Error:", err);
       setError("System Failure: Gateway unreachable.");
     } finally {
       setIsLoading(false);
@@ -69,7 +77,6 @@ const Register = () => {
               Account <span className="text-red-600">Init</span>
             </h2>
             
-            {/* ROLE SELECTOR TOGGLE */}
             <div className="flex bg-black/50 p-1.5 rounded-2xl mt-6 border border-white/5 relative">
               <button 
                 type="button"
@@ -121,7 +128,6 @@ const Register = () => {
               />
             </div>
 
-            {/* SECRET FIELD - ANIMATES IN ONLY FOR ADMINS */}
             <AnimatePresence mode="wait">
               {isAdminMode && (
                 <motion.div 
