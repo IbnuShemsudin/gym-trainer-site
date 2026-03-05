@@ -9,11 +9,14 @@ const Login = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  // --- DYNAMIC API URL LOGIC ---
+  // --- UPDATED: ABSOLUTE API URL LOGIC ---
   const getApiUrl = () => {
-    return window.location.hostname === "localhost" 
-      ? "http://localhost:5000/api/auth/login" 
-      : "/api/auth/login";
+    // Check if we are running locally
+    if (window.location.hostname === "localhost") {
+      return "http://localhost:5000/api/auth/login";
+    }
+    // Point to your ACTUAL backend Vercel project URL
+    return "https://ethiofit-api.vercel.app/api/auth/login"; 
   };
 
   const handleLogin = async (e) => {
@@ -22,22 +25,25 @@ const Login = () => {
     setError("");
 
     try {
-      // UPDATED: Now points to the dynamic URL
       const res = await fetch(getApiUrl(), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
 
+      // Verification: Check if response is actually JSON (avoids HTML error pages)
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Server Error: Check API endpoint configuration.");
+      }
+
       const data = await res.json();
       
       if (res.ok && data.token) {
-        // --- SECURE DATA STORAGE ---
         localStorage.setItem("token", data.token);
         localStorage.setItem("role", data.role); 
         localStorage.setItem("userName", data.name || "Operator");
 
-        // --- INTELLIGENT ROUTING ---
         if (data.role === "admin") {
           navigate("/admin/dashboard");
         } else {
@@ -47,7 +53,7 @@ const Login = () => {
         setError(data.message || "Invalid Authorization Credentials");
       }
     } catch (err) {
-      // Catches network failures or 502/504 Gateway errors
+      console.error("Login Error:", err);
       setError("System Offline: Server connection failed.");
     } finally {
       setIsLoading(false);
