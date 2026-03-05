@@ -17,8 +17,9 @@ const app = express();
 // 2. MIDDLEWARE & CORS CONFIGURATION
 // Since deployments are separate, we must explicitly allow your frontend domain
 app.use(cors({
-    origin: ["https://ethiofit.vercel.app", "http://localhost:3000"], // Add your actual frontend Vercel URL here
-    methods: ["GET", "POST", "PUT", "DELETE"],
+    origin: "https://ethiofit.vercel.app", // Your exact frontend URL
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true
 }));
 app.use(express.json()); 
