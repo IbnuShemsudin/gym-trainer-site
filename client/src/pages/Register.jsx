@@ -16,6 +16,14 @@ const Register = () => {
     adminSecret: "" 
   });
 
+  // --- ADDED: DYNAMIC API URL LOGIC ---
+  const getApiUrl = () => {
+    // If we are on localhost, use the local server. Otherwise, use relative path for Vercel.
+    return window.location.hostname === "localhost" 
+      ? "http://localhost:5000/api/auth/register" 
+      : "/api/auth/register";
+  };
+
   const handleRegister = async (e) => {
     e.preventDefault();
     setIsLoading(true);
@@ -27,7 +35,8 @@ const Register = () => {
         roleRequest: isAdminMode ? "admin" : "client"
       };
 
-      const res = await fetch("http://localhost:5000/api/auth/register", {
+      // UPDATED: Now uses the dynamic URL
+      const res = await fetch(getApiUrl(), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -41,6 +50,7 @@ const Register = () => {
         setError(data.message || "Registration Denied.");
       }
     } catch (err) {
+      // If the fetch fails completely (network error), this block runs
       setError("System Failure: Gateway unreachable.");
     } finally {
       setIsLoading(false);
@@ -112,7 +122,7 @@ const Register = () => {
             </div>
 
             {/* SECRET FIELD - ANIMATES IN ONLY FOR ADMINS */}
-            <AnimatePresence>
+            <AnimatePresence mode="wait">
               {isAdminMode && (
                 <motion.div 
                   initial={{ opacity: 0, height: 0 }} 
@@ -130,15 +140,15 @@ const Register = () => {
               )}
             </AnimatePresence>
 
-            <AnimatePresence>
+            <AnimatePresence mode="wait">
               {error && (
-                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-red-500 text-[9px] font-black uppercase text-center bg-red-500/10 p-4 rounded-2xl border border-red-500/10">
+                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }} className="text-red-500 text-[9px] font-black uppercase text-center bg-red-500/10 p-4 rounded-2xl border border-red-500/10">
                   <ShieldCheck className="inline-block mr-2 mb-0.5" size={12} /> {error}
                 </motion.div>
               )}
             </AnimatePresence>
 
-            <button disabled={isLoading} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-red-700 active:scale-[0.98] transition-all shadow-xl shadow-red-600/20">
+            <button disabled={isLoading} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-red-700 active:scale-[0.98] transition-all shadow-xl shadow-red-600/20 disabled:opacity-50 disabled:cursor-not-allowed">
               {isLoading ? <Loader2 className="animate-spin mx-auto" size={18} /> : "Establish Credentials"}
             </button>
           </form>

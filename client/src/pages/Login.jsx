@@ -9,13 +9,21 @@ const Login = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+  // --- DYNAMIC API URL LOGIC ---
+  const getApiUrl = () => {
+    return window.location.hostname === "localhost" 
+      ? "http://localhost:5000/api/auth/login" 
+      : "/api/auth/login";
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/login", {
+      // UPDATED: Now points to the dynamic URL
+      const res = await fetch(getApiUrl(), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
@@ -33,13 +41,13 @@ const Login = () => {
         if (data.role === "admin") {
           navigate("/admin/dashboard");
         } else {
-          // Standard users land on their Personal Dashboard
           navigate("/dashboard"); 
         }
       } else {
         setError(data.message || "Invalid Authorization Credentials");
       }
     } catch (err) {
+      // Catches network failures or 502/504 Gateway errors
       setError("System Offline: Server connection failed.");
     } finally {
       setIsLoading(false);
@@ -48,7 +56,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#050505] relative overflow-hidden selection:bg-red-600 selection:text-white">
-      {/* Background Ambient Glow */}
       <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(220,38,38,0.08),transparent_50%)]" />
       
       <motion.div 
@@ -77,6 +84,7 @@ const Login = () => {
                   type="email" 
                   className="w-full bg-zinc-950/50 border border-white/5 p-4 pl-12 rounded-2xl text-white focus:border-red-600/50 outline-none transition-all text-sm"
                   placeholder="name@ethiofit.com"
+                  autoComplete="email"
                   onChange={(e) => setFormData({...formData, email: e.target.value})}
                   required
                 />
@@ -91,13 +99,14 @@ const Login = () => {
                   type="password" 
                   className="w-full bg-zinc-950/50 border border-white/5 p-4 pl-12 rounded-2xl text-white focus:border-red-600/50 outline-none transition-all text-sm"
                   placeholder="••••••••"
+                  autoComplete="current-password"
                   onChange={(e) => setFormData({...formData, password: e.target.value})}
                   required
                 />
               </div>
             </div>
 
-            <AnimatePresence>
+            <AnimatePresence mode="wait">
               {error && (
                 <motion.div 
                   initial={{ opacity: 0, y: -10 }} 

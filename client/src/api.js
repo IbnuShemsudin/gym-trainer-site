@@ -1,8 +1,10 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:5000/api', // This points to your Node server
+    // This automatically picks the right URL
+    baseURL: process.env.NODE_ENV === 'production' 
+        ? 'https://ethiofit-api.vercel.app' // Your actual Vercel Backend URL
+        : 'http://localhost:5000'
 });
 
-export const registerUser = (userData) => API.post('/register', userData);
-export const loginUser = (userData) => API.post('/login', userData);
+export default API;
