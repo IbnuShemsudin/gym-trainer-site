@@ -1,6 +1,5 @@
 require('dotenv').config();
 const express = require('express');
-const cors = require('cors');
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs'); 
 const jwt = require('jsonwebtoken'); 
@@ -14,23 +13,33 @@ const auth = require('./src/middleware/auth');
 
 const app = express();
 
-// 2. MIDDLEWARE & CORS CONFIGURATION
-// Since deployments are separate, we must explicitly allow your frontend domain
-app.use(cors({
-    origin: "https://ethiofit.vercel.app", // Your exact frontend URL
-    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
-    credentials: true
-}));
+// 2. MANUAL CORS HANDSHAKE (Optimized for Serverless)
+const allowedOrigins = [
+    "https://ethiofit.vercel.app", 
+    "http://localhost:3000"
+];
 
-app.options("*", cors());
+app.use((req, res, next) => {
+    const origin = req.headers.origin;
+    if (allowedOrigins.includes(origin)) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+    }
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+    // Respond immediately to browser preflight requests
+    if (req.method === 'OPTIONS') {
+        return res.status(200).json({});
+    }
+    next();
+});
 
 app.use(express.json()); 
 
 // 3. DATABASE CONNECTION (Optimized for Serverless)
 const connectDB = async () => {
     if (mongoose.connection.readyState >= 1) return;
-    
     try {
         await mongoose.connect(process.env.MONGO_URI);
         console.log('✅ Connected to MongoDB Atlas');
@@ -47,7 +56,7 @@ app.use(async (req, res, next) => {
 
 // 4. ROUTES
 
-// Root Route - Good for health checks
+// Root Route - Health Check
 app.get('/', (req, res) => res.send('Ethio Fit API: System Online'));
 
 /**
@@ -74,18 +83,13 @@ app.post('/api/auth/register', async (req, res) => {
             assignedRole = 'admin';
         }
 
-        user = new User({ 
-            name, 
-            email, 
-            password, 
-            role: assignedRole 
-        });
+        user = new User({ name, email, password, role: assignedRole });
 
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(password, salt);
         await user.save();
         
-        res.status(201).json({ success: true, message: "Account authorized and created.", role: user.role });
+        res.status(201).json({ success: true, message: "Account created.", role: user.role });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
@@ -104,10 +108,7 @@ app.post('/api/auth/login', async (req, res) => {
         if (!isMatch) return res.status(400).json({ success: false, message: "Invalid Credentials" });
 
         const payload = { 
-            user: { 
-                id: user._id,
-                role: user.role 
-            } 
+            user: { id: user._id, role: user.role } 
         };
 
         const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '12h' });
@@ -131,23 +132,16 @@ app.put('/api/auth/profile', auth, async (req, res) => {
         const { name, password } = req.body;
         const user = await User.findById(req.user.id);
 
-        if (!user) {
-            return res.status(404).json({ success: false, message: "User not found" });
-        }
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
         if (name) user.name = name;
-
         if (password) {
             const salt = await bcrypt.genSalt(10);
             user.password = await bcrypt.hash(password, salt);
         }
 
         await user.save();
-        res.json({ 
-            success: true, 
-            message: "Profile updated successfully",
-            name: user.name 
-        });
+        res.json({ success: true, message: "Profile updated", name: user.name });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
@@ -168,7 +162,7 @@ app.post('/api/leads', async (req, res) => {
         const { name, email, phone, program } = req.body;
         const newLead = new Lead({ name, email, phone, program });
         await newLead.save();
-        res.status(201).json({ success: true, message: 'Lead captured successfully' });
+        res.status(201).json({ success: true, message: 'Lead captured' });
     } catch (err) {
         res.status(400).json({ success: false, error: err.message });
     }
@@ -177,7 +171,7 @@ app.post('/api/leads', async (req, res) => {
 app.delete('/api/leads/:id', auth, async (req, res) => {
     try {
         await Lead.findByIdAndDelete(req.params.id);
-        res.json({ success: true, message: "Lead permanently removed" });
+        res.json({ success: true, message: "Lead removed" });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
@@ -207,7 +201,7 @@ app.post('/api/gallery', auth, async (req, res) => {
 app.delete('/api/gallery/:id', auth, async (req, res) => {
     try {
         await Gallery.findByIdAndDelete(req.params.id);
-        res.json({ success: true, message: "Asset purged from gallery" });
+        res.json({ success: true, message: "Asset purged" });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
@@ -250,5 +244,5 @@ if (process.env.NODE_ENV !== 'production') {
     app.listen(PORT, () => console.log(`🚀 Elite Server running locally on port ${PORT}`));
 }
 
-// 6. EXPORT APP (Essential for Vercel)
+// 6. EXPORT APP
 module.exports = app;
