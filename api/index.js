@@ -13,10 +13,19 @@ const auth = require('./src/middleware/auth');
 
 const app = express();
 
+const ensureAdmin = (req, res, next) => {
+    if (!req.user || req.user.role !== 'admin') {
+        return res.status(403).json({ success: false, message: 'Admin access required' });
+    }
+    next();
+};
+
 // 2. MANUAL CORS HANDSHAKE (Optimized for Serverless)
 const allowedOrigins = [
-    "https://ethiofit.vercel.app", 
-    "http://localhost:3000"
+    "https://ethiofit.vercel.app",
+    "http://localhost:3000",
+    "http://localhost:5173",
+    "http://127.0.0.1:5173"
 ];
 
 app.use((req, res, next) => {
@@ -54,6 +63,17 @@ app.use(async (req, res, next) => {
     next();
 });
 
+// Attempt an initial DB connection at startup for clearer diagnostics
+connectDB();
+
+// If DB connection not established, return 503 for API routes
+app.use((req, res, next) => {
+    if (req.path.startsWith('/api') && mongoose.connection.readyState === 0) {
+        return res.status(503).json({ success: false, message: 'Service temporarily unavailable: database connection not established.' });
+    }
+    next();
+});
+
 // 4. ROUTES
 
 // Root Route - Health Check
@@ -76,20 +96,27 @@ app.post('/api/auth/register', async (req, res) => {
         }
 
         let assignedRole = 'client';
+        let accountStatus = 'pending';
+
         if (roleRequest === 'admin') {
             if (adminSecret !== process.env.ADMIN_SECRET_KEY) {
                 return res.status(403).json({ success: false, message: "Invalid Admin Secret Key" });
             }
             assignedRole = 'admin';
+            accountStatus = 'approved';
         }
 
-        user = new User({ name, email, password, role: assignedRole });
+        user = new User({ name, email, password, role: assignedRole, status: accountStatus });
 
         const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(password, salt);
         await user.save();
         
-        res.status(201).json({ success: true, message: "Account created.", role: user.role });
+        const message = assignedRole === 'admin'
+            ? "Admin account created. Access granted."
+            : "Client account created. Pending admin approval.";
+
+        res.status(201).json({ success: true, message, role: user.role });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }
@@ -106,6 +133,11 @@ app.post('/api/auth/login', async (req, res) => {
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) return res.status(400).json({ success: false, message: "Invalid Credentials" });
+
+        const accountStatus = user.status || 'approved';
+        if (user.role === 'client' && accountStatus !== 'approved') {
+            return res.status(403).json({ success: false, message: 'Account pending admin approval.' });
+        }
 
         const payload = { 
             user: { id: user._id, role: user.role } 
@@ -142,6 +174,63 @@ app.put('/api/auth/profile', auth, async (req, res) => {
 
         await user.save();
         res.json({ success: true, message: "Profile updated", name: user.name });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+app.put('/api/admin/update-profile', auth, ensureAdmin, async (req, res) => {
+    try {
+        const { name, password } = req.body;
+        const user = await User.findById(req.user.id);
+
+        if (!user) return res.status(404).json({ success: false, message: "User not found" });
+
+        if (name) user.name = name;
+        if (password) {
+            const salt = await bcrypt.genSalt(10);
+            user.password = await bcrypt.hash(password, salt);
+        }
+
+        await user.save();
+        res.json({ success: true, message: "Admin profile updated", name: user.name });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+app.get('/api/admin/requests', auth, ensureAdmin, async (req, res) => {
+    try {
+        const requests = await User.find({ role: 'client', status: 'pending' }).select('name email createdAt');
+        res.json({ success: true, data: requests });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+app.put('/api/admin/requests/:id/approve', auth, ensureAdmin, async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ success: false, message: 'Request not found' });
+        if (user.role !== 'client') return res.status(400).json({ success: false, message: 'Only client requests can be approved' });
+
+        user.status = 'approved';
+        await user.save();
+        res.json({ success: true, message: 'Client approved' });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
+app.put('/api/admin/requests/:id/reject', auth, ensureAdmin, async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id);
+        if (!user) return res.status(404).json({ success: false, message: 'Request not found' });
+        if (user.role !== 'client') return res.status(400).json({ success: false, message: 'Only client requests can be rejected' });
+
+        user.status = 'rejected';
+        await user.save();
+        res.json({ success: true, message: 'Client request rejected' });
     } catch (err) {
         res.status(500).json({ success: false, error: err.message });
     }

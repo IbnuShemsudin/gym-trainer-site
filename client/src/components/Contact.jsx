@@ -11,6 +11,8 @@ import {
   AlertCircle 
 } from "lucide-react";
 
+const BASE_API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const Contact = ({ initialPlan }) => {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -48,11 +50,11 @@ const Contact = ({ initialPlan }) => {
     }
 
     if (step === 3) {
-      // Ethiopian Phone Validation: Matches +251..., 09..., or 07... (10-13 digits total)
-      const ethioPhoneRegex = /^(\+251|0)(9|7)\d{8}$/;
-      const cleanPhone = formData.phone.replace(/\s/g, "");
+      // Ethiopian phone validation: allow local 0XXXXXXXXX or international +251XXXXXXXXX
+      const cleanPhone = formData.phone.replace(/[\s\-()]/g, "");
+      const ethioPhoneRegex = /^(?:\+251|00251|0)\d{9}$/;
       if (!ethioPhoneRegex.test(cleanPhone)) {
-        setError("Network Error: Provide a valid Ethiopian phone (+251... or 09...)");
+        setError("Network Error: Provide a valid Ethiopian phone like +2519XXXXXXXX or 09XXXXXXXX.");
         return false;
       }
     }
@@ -79,7 +81,7 @@ const Contact = ({ initialPlan }) => {
     setError(null);
 
     try {
-      const res = await fetch("http://localhost:5000/api/leads", {
+      const res = await fetch(`${BASE_API_URL}/api/leads`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

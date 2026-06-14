@@ -1,0 +1,22 @@
+{
+  "short_name": "EthioFit",
+  "name": "Ethio Fit Gym Trainer",
+  "icons": [
+    {
+      "src": "/favicon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    }
+  ],
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#050505",
+  "theme_color": "#050505",
+  "description": "Ethio Fit gym and personal trainer booking platform.",
+  "lang": "en-US"
+}

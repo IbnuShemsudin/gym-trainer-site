@@ -9,6 +9,11 @@ const userSchema = new mongoose.Schema({
     enum: ['client', 'admin'], 
     default: 'client' // Everyone is a client unless they prove otherwise
   },
+  status: {
+    type: String,
+    enum: ['pending', 'approved', 'rejected'],
+    default: 'pending'
+  },
   createdAt: { type: Date, default: Date.now }
 });
 

@@ -1,31 +1,31 @@
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import { 
   Zap, Users, Target, Trophy, 
   Shield, CheckCircle2, ArrowRight, 
   Crown, Star, Clock, Activity, 
-  Dumbbell, Fingerprint
+  Dumbbell, Fingerprint, X, Upload, Check, AlertCircle
 } from "lucide-react";
 
 const tiers = [
   {
     name: "Foundation",
-    price: "2,500",
+    price: 2500,
     description: "Ideal for consistent trainers looking for a premium environment.",
     features: ["Access to all Gym Zones", "Locker & Shower Access", "2 Guest Passes/Month", "Basic Health Assessment"],
     highlight: false
   },
   {
     name: "Elite Performance",
-    price: "4,500",
+    price: 4500,
     description: "Our most popular tier for serious results and recovery.",
     features: ["Everything in Foundation", "Unlimited HIIT & Yoga Classes", "Monthly Body Composition Analysis", "1 Personal Training Session/Month", "Sauna & Cold Plunge Access"],
     highlight: true
   },
   {
     name: "Executive",
-    price: "8,000",
+    price: 8000,
     description: "The ultimate bespoke experience for high-performers.",
     features: ["Everything in Elite", "4 Dedicated PT Sessions/Month", "Personalized Nutrition Protocol", "Laundry Service for Kit", "Priority Workshop Booking"],
     highlight: false
@@ -33,6 +33,19 @@ const tiers = [
 ];
 
 const Services = () => {
+  // Modal & Application Processing States
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTier, setSelectedTier] = useState(tiers[1]); 
+  const [selectedProgram, setSelectedProgram] = useState("Bodybuilding");
+  const [duration, setDuration] = useState(1); // 1, 3, or 12 Months
+
+  // Form Fields
+  const [clientName, setClientName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [screenshot, setScreenshot] = useState(null);
+  const [screenshotName, setScreenshotName] = useState("");
+  const [isSubmitted, setIsSubmitted] = useState(false);
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
@@ -43,8 +56,62 @@ const Services = () => {
     visible: { y: 0, opacity: 1 }
   };
 
+  // Pricing multiplier matrix logic
+  const getMultiplier = (months) => {
+    if (months === 3) return 2.7; // 10% Off bundle discount
+    if (months === 12) return 9.6; // 20% Off bundle discount
+    return 1;
+  };
+
+  const calculateTotal = () => {
+    return Math.round(selectedTier.price * getMultiplier(duration));
+  };
+
+  const openCheckout = (tierName) => {
+    const targetTier = tiers.find(t => t.name === tierName) || tiers[1];
+    setSelectedTier(targetTier);
+    setIsModalOpen(true);
+  };
+
+  const handleFileChange = (e) => {
+    if (e.target.files && e.target.files[0]) {
+      setScreenshot(e.target.files[0]);
+      setScreenshotName(e.target.files[0].name);
+    }
+  };
+
+  const handleApplicationSubmit = (e) => {
+    e.preventDefault();
+    if (!clientName || !phone || !screenshot) return;
+
+    // Package payload data structure ready for Node/Express API connectivity
+    const applicationPayload = {
+      name: clientName,
+      phone: phone,
+      tier: selectedTier.name,
+      program: selectedProgram,
+      durationMonths: duration,
+      totalPaidETB: calculateTotal(),
+      paymentProofFile: screenshot,
+      status: "pending_approval"
+    };
+
+    console.log("Application Submitted Successfully to Gateway Node:", applicationPayload);
+    setIsSubmitted(true);
+  };
+
+  const resetFormState = () => {
+    setIsModalOpen(false);
+    setIsSubmitted(false);
+    setClientName("");
+    setPhone("");
+    setScreenshot(null);
+    setScreenshotName("");
+    setDuration(1);
+  };
+
   return (
-    <div className="min-h-screen bg-white dark:bg-[#030303] text-zinc-900 dark:text-white pt-32 pb-20 selection:bg-red-600 selection:text-white">
+    <div className="min-h-screen bg-white dark:bg-[#030303] text-zinc-900 dark:text-white pt-32 pb-20 selection:bg-red-600 selection:text-white relative">
       
       {/* --- HERO HEADER --- */}
       <section className="max-w-7xl mx-auto px-6 mb-24">
@@ -85,9 +152,12 @@ const Services = () => {
                 <h3 className="text-4xl font-black uppercase italic mb-4 leading-tight">Biometric <br/>Optimization</h3>
                 <p className="text-zinc-400 text-sm leading-relaxed max-w-xs font-medium">1-on-1 coaching utilizing real-time metabolic tracking and motion analysis to eliminate plateaus.</p>
               </div>
-              <Link to="/contact" className="flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.3em] text-red-500 group-hover:text-red-400 transition-all">
+              <button 
+                onClick={() => { setSelectedProgram("Biometric Optimization"); openCheckout("Elite Performance"); }}
+                className="flex items-center gap-3 text-[11px] font-black uppercase tracking-[0.3em] text-red-500 group-hover:text-red-400 transition-all text-left focus:outline-none"
+              >
                 Access Protocol <ArrowRight size={16}/>
-              </Link>
+              </button>
             </div>
             <div className="absolute -bottom-20 -right-20 w-80 h-80 bg-red-600/20 blur-[100px] group-hover:bg-red-600/30 transition-all duration-700" />
           </motion.div>
@@ -144,7 +214,7 @@ const Services = () => {
                 transition={{ delay: i * 0.15, duration: 0.6 }}
                 className={`relative p-12 rounded-[3.5rem] border transition-all duration-500 ${
                   tier.highlight 
-                  ? 'bg-zinc-950 border-red-600 shadow-[0_30px_60px_-15px_rgba(220,38,38,0.2)] scale-105 z-10' 
+                  ? 'bg-zinc-950 border-red-600 shadow-[0_30px_60px_-15px_rgba(220,38,38,0.2)] scale-105 z-10 text-white' 
                   : 'bg-white dark:bg-black/40 border-zinc-200 dark:border-white/5 hover:border-red-600/50'
                 }`}
               >
@@ -159,7 +229,7 @@ const Services = () => {
                 </h3>
 
                 <div className="flex items-baseline gap-2 mb-8">
-                  <span className="text-5xl font-black text-red-600 tracking-tighter">{tier.price}</span>
+                  <span className="text-5xl font-black text-red-600 tracking-tighter">{tier.price.toLocaleString()}</span>
                   <span className="text-zinc-500 text-[10px] font-black tracking-widest uppercase">ETB / Mo</span>
                 </div>
                 
@@ -180,15 +250,16 @@ const Services = () => {
                   ))}
                 </ul>
 
-                <Link to="/contact">
-                  <button className={`w-full py-6 rounded-2xl font-black uppercase tracking-[0.2em] text-[11px] transition-all active:scale-[0.98] ${
+                <button 
+                  onClick={() => openCheckout(tier.name)}
+                  className={`w-full py-6 rounded-2xl font-black uppercase tracking-[0.2em] text-[11px] transition-all active:scale-[0.98] focus:outline-none ${
                     tier.highlight 
                     ? 'bg-red-600 text-white hover:bg-red-700 shadow-xl shadow-red-600/30' 
                     : 'bg-zinc-100 dark:bg-zinc-900 text-zinc-900 dark:text-white hover:bg-red-600 hover:text-white'
-                  }`}>
-                    Establish Connection
-                  </button>
-                </Link>
+                  }`}
+                >
+                  Establish Connection
+                </button>
               </motion.div>
             ))}
           </div>
@@ -262,6 +333,206 @@ const Services = () => {
           </div>
         </div>
       </section>
+
+      {/* --- RECONSTRUCTED ADMISSIONS MODAL OVERLAY --- */}
+      <AnimatePresence>
+        {isModalOpen && (
+          <>
+            {/* Backdrop Mask Layer */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={resetFormState}
+              className="fixed inset-0 bg-black/90 backdrop-blur-xl z-[998]"
+            />
+
+            {/* Core Modal Shell */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 30 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 30 }}
+              className="fixed inset-x-4 top-8 bottom-8 md:inset-auto md:top-1/2 md:left-1/2 md:-translate-x-1/2 md:-translate-y-1/2 w-full md:max-w-2xl h-[90vh] md:h-auto max-h-[90vh] bg-zinc-950 border border-zinc-800 rounded-3xl p-8 md:p-10 z-[999] shadow-2xl overflow-y-auto"
+            >
+              <div className="flex justify-between items-start mb-8">
+                <div>
+                  <span className="text-[10px] font-black text-red-600 uppercase tracking-[0.3em] block mb-1">Admissions Pipeline</span>
+                  <h3 className="text-3xl font-black uppercase italic text-white">Join the Lab</h3>
+                </div>
+                <button 
+                  onClick={resetFormState}
+                  className="p-2.5 rounded-xl bg-zinc-900 border border-white/5 text-zinc-400 hover:text-white transition-colors focus:outline-none"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {!isSubmitted ? (
+                <form onSubmit={handleApplicationSubmit} className="space-y-6">
+                  
+                  {/* Dynamic Selection Overview Indicators */}
+                  <div className="grid grid-cols-2 gap-4 bg-zinc-900/50 p-4 rounded-2xl border border-white/5 mb-2">
+                    <div>
+                      <span className="text-[9px] font-black text-zinc-500 uppercase tracking-wider block">Access Tier</span>
+                      <span className="text-sm font-black text-white uppercase italic">{selectedTier.name}</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[9px] font-black text-zinc-500 uppercase tracking-wider block">Base Rate</span>
+                      <span className="text-sm font-black text-red-600">{selectedTier.price.toLocaleString()} ETB/Mo</span>
+                    </div>
+                  </div>
+
+                  {/* Primary Fields Row */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest font-black text-zinc-400 mb-2">Full Name</label>
+                      <input
+                        type="text"
+                        required
+                        value={clientName}
+                        onChange={(e) => setClientName(e.target.value)}
+                        placeholder="e.g., Abel Tesfaye"
+                        className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3.5 text-sm text-white placeholder-zinc-700 focus:outline-none focus:border-red-600/50 transition-colors"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] uppercase tracking-widest font-black text-zinc-400 mb-2">Phone Number</label>
+                      <input
+                        type="tel"
+                        required
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="e.g., 0911223344"
+                        className="w-full bg-zinc-900 border border-white/5 rounded-xl px-4 py-3.5 text-sm text-white placeholder-zinc-700 focus:outline-none focus:border-red-600/50 transition-colors"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Program Target Selection Layer */}
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest font-black text-zinc-400 mb-3">Target Discipline</label>
+                    <div className="grid grid-cols-3 gap-3">
+                      {["Bodybuilding", "Cardio / Burn", "Powerlifting", "HIIT Ops", "Athletic Mobility"].map((prog) => (
+                        <button
+                          type="button"
+                          key={prog}
+                          onClick={() => setSelectedProgram(prog)}
+                          className={`py-3 px-2 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all ${
+                            selectedProgram === prog 
+                            ? "bg-red-600 border-red-600 text-white" 
+                            : "bg-zinc-900 border-white/5 text-zinc-400 hover:border-zinc-700"
+                          }`}
+                        >
+                          {prog}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Operational Duration Pipeline Toggle */}
+                  <div>
+                    <div className="flex justify-between items-center mb-3">
+                      <label className="block text-[10px] uppercase tracking-widest font-black text-zinc-400">Subscription Horizon</label>
+                      <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest">Discounts Applied Suffix</span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      {[
+                        { label: "1 Month", val: 1, desc: "Standard Cycle" },
+                        { label: "3 Months", val: 3, desc: "10% Bundle Save" },
+                        { label: "Annual", val: 12, desc: "20% Absolute Save" }
+                      ].map((item) => (
+                        <button
+                          type="button"
+                          key={item.val}
+                          onClick={() => setDuration(item.val)}
+                          className={`p-3 rounded-xl border text-left transition-all ${
+                            duration === item.val
+                            ? "bg-white text-black border-white"
+                            : "bg-zinc-900 border-white/5 text-white hover:border-zinc-700"
+                          }`}
+                        >
+                          <span className="block text-xs font-black uppercase tracking-tight">{item.label}</span>
+                          <span className={`block text-[8px] font-bold uppercase mt-0.5 ${duration === item.val ? 'text-red-600' : 'text-zinc-500'}`}>{item.desc}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Screen Transfer Upload Matrix */}
+                  <div>
+                    <label className="block text-[10px] uppercase tracking-widest font-black text-zinc-400 mb-2">
+                      Upload Bank Transfer Screenshot <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative border-2 border-dashed border-zinc-800 hover:border-zinc-700 rounded-2xl p-6 transition-colors bg-zinc-900/20">
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        required
+                        onChange={handleFileChange}
+                        className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                      />
+                      <div className="flex flex-col items-center justify-center text-center">
+                        <Upload className="text-zinc-600 mb-2" size={24} />
+                        {screenshotName ? (
+                          <span className="text-xs font-bold text-red-500 uppercase tracking-tight max-w-[250px] truncate">{screenshotName}</span>
+                        ) : (
+                          <>
+                            <span className="text-xs font-black uppercase tracking-wider text-white">Select Screenshot Image</span>
+                            <span className="text-[9px] text-zinc-500 mt-1 font-medium">CBE, Awash, or Telebirr Receipt Interface</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Checkout Final Metrics Totalizer */}
+                  <div className="pt-4 border-t border-white/5 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block">Aggregated Total Due</span>
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-3xl font-black text-white tracking-tighter">{calculateTotal().toLocaleString()}</span>
+                        <span className="text-[9px] font-black text-zinc-400 uppercase tracking-widest">ETB</span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      className="bg-red-600 hover:bg-red-700 text-white font-black text-[11px] uppercase tracking-[0.2em] px-8 py-4 rounded-xl shadow-lg shadow-red-600/10 transition-colors focus:outline-none"
+                    >
+                      Apply To Join Lab
+                    </button>
+                  </div>
+
+                </form>
+              ) : (
+                /* Application Pending Success Screen UI */
+                <motion.div 
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="py-12 flex flex-col items-center justify-center text-center"
+                >
+                  <div className="w-20 h-20 bg-red-600/10 border border-red-600/30 text-red-600 rounded-full flex items-center justify-center mb-6 shadow-xl">
+                    <Check size={36} strokeWidth={3} />
+                  </div>
+                  <h4 className="text-2xl font-black uppercase italic text-white tracking-tight mb-3">Application Pipeline Locked</h4>
+                  <p className="text-zinc-400 text-sm max-w-sm font-medium leading-relaxed mb-8">
+                    Thanks <span className="text-white font-bold">{clientName}</span>. Your screenshot data payload has been logged. Admin operators will cross-reference the transaction ledger and activate entry via biometrics.
+                  </p>
+                  <div className="flex items-center gap-2 bg-zinc-900 border border-white/5 text-zinc-500 text-[10px] font-black uppercase tracking-widest px-4 py-2.5 rounded-xl mb-4">
+                    <AlertCircle size={12} className="text-red-500" /> System Status: Pending Verification
+                  </div>
+                  <button
+                    onClick={resetFormState}
+                    className="mt-4 text-xs font-black text-zinc-400 hover:text-white uppercase tracking-widest border-b border-zinc-700 hover:border-white pb-0.5 transition-colors focus:outline-none"
+                  >
+                    Return To Lab Overview
+                  </button>
+                </motion.div>
+              )}
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

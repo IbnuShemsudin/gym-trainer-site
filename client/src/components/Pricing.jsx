@@ -3,6 +3,8 @@ import { motion } from "framer-motion";
 import { Check, Zap, Crown, Star, ArrowRight, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom"; // Import useNavigate
 
+const BASE_API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 // Pass setSelectedPlan (from App.jsx) as a prop
 const Pricing = ({ setSelectedPlan }) => { 
   const [plans, setPlans] = useState([]);
@@ -12,7 +14,7 @@ const Pricing = ({ setSelectedPlan }) => {
   useEffect(() => {
     const fetchPlans = async () => {
       try {
-        const response = await fetch("http://localhost:5000/api/pricing");
+const response = await fetch(`${BASE_API_URL}/api/pricing`);
         const result = await response.json();
 
         if (result.success) {

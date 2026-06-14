@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom"; // Added for Routing
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence, useScroll, useSpring } from "framer-motion";
 import { Menu, X, ChevronDown, Sun, Moon, ArrowRight, Zap, Instagram, Twitter, Youtube } from "lucide-react";
 
@@ -10,10 +10,9 @@ const Navbar = () => {
   const [activeSection, setActiveSection] = useState("hero");
   const [theme, setTheme] = useState(localStorage.getItem("theme") || "dark");
 
-  const location = useLocation(); // Detection of current page
+  const location = useLocation();
   const navigate = useNavigate();
 
-  // Scroll Progress Bar
   const { scrollYProgress } = useScroll();
   const scaleX = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
 
@@ -27,9 +26,8 @@ const Navbar = () => {
     const handleScroll = () => {
       setScrolled(window.scrollY > 50);
 
-      // Section detection now only relevant if you want to track scroll on long pages
       if (location.pathname === "/") {
-        const sections = ["hero", "programs", "gallery", "pricing", "contact"];
+        const sections = ["hero", "gallery", "pricing", "contact"];
         const current = sections.find(section => {
           const el = document.getElementById(section);
           if (el) {
@@ -46,29 +44,31 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [location.pathname]);
 
-  // UPDATED: All links are now true routes
+  // REMOVED: "Programs" link removed from this array to clean up desktop & mobile layers
   const navLinks = [
     { name: "Home", href: "/", id: "hero" },
-    { name: "Programs", href: "/programs", id: "programs" },
     { name: "Gallery", href: "/gallery", id: "gallery" },
     { name: "Pricing", href: "/pricing", id: "pricing" },
     { name: "Contact", href: "/contact", id: "contact" },
     { name: "About", href: "/about", id: "about" },
   ];
 
+  // UPDATED: Standardized paths to route directly to specific sub-resource detail nodes
   const programsList = [
-    { title: "Strength Training", desc: "Build elite muscle mass", href: "/programs" },
-    { title: "HIIT Cardio", desc: "Burn fat in record time", href: "/programs" },
-    { title: "Yoga & Flex", desc: "Recovery for athletes", href: "/programs" },
-    { title: "Personal Coaching", desc: "1-on-1 expert guidance", href: "/programs" },
+    { title: "Strength Training", desc: "Build elite muscle mass", href: "/programs/strength-power" },
+    { title: "HIIT Cardio", desc: "Burn fat in record time", href: "/programs/hiit-burn" },
+    { title: "Yoga & Flex", desc: "Recovery for athletes", href: "/programs/yoga-mobility" },
+    { title: "Personal Coaching", desc: "1-on-1 expert guidance", href: "/programs/personal-elite" },
   ];
 
-  // UPDATED: Now handles page navigation instead of smooth scrolling
   const handleNavClick = (href) => {
     setMenuOpen(false);
     setActiveDropdown(false);
     navigate(href);
   };
+
+  // UX Logic: Checks if current page is any program route to highlight the parent 'Explore' text
+  const isViewingPrograms = location.pathname.startsWith("/programs");
 
   return (
     <>
@@ -94,40 +94,34 @@ const Navbar = () => {
             >
               <h1 className="text-xl md:text-2xl font-black tracking-tighter flex items-center gap-1 dark:text-white uppercase">
                 <span className="bg-red-600 text-white px-2 py-0.5 rounded italic group-hover:bg-red-700 transition-colors">E</span>
-                <span className="hidden sm:inline italic">LITE<span className="text-red-600">FIT</span></span>
+                <span className="hidden sm:inline italic">LITE<span className="text-red-600">GYM</span></span>
               </h1>
             </Link>
           </div>
 
-          {/* CENTER — NAV LINKS */}
+          {/* CENTER — NAV LINKS WITH INTEGRATED EXPLORE DROPDOWN */}
           <div className="hidden lg:flex flex-[2] justify-center">
             <ul className="flex items-center gap-1 text-[11px] font-black uppercase tracking-[0.15em] dark:text-zinc-400 text-zinc-500">
-              {navLinks.map((link) => (
-                <li key={link.name} className="relative px-4 py-2 cursor-pointer group">
-                  <Link 
-                    to={link.href}
-                    className={`transition-colors duration-300 ${location.pathname === link.href ? "text-red-600" : "hover:text-black dark:hover:text-white"}`}
-                  >
-                    {link.name}
-                  </Link>
-                  {location.pathname === link.href && (
+              
+              {/* WIRED DROPDOWN MENU INTERFACE */}
+              <li
+                className="relative px-4 py-2 cursor-pointer group select-none"
+                onMouseEnter={() => setActiveDropdown(true)}
+                onMouseLeave={() => setActiveDropdown(false)}
+              >
+                <div className={`flex items-center gap-1 transition-colors relative h-full ${
+                  activeDropdown || isViewingPrograms ? "text-red-600" : "hover:text-black dark:hover:text-white"
+                }`}>
+                  Explore <ChevronDown size={12} className={`transition-transform duration-300 ${activeDropdown ? "rotate-180" : ""}`} />
+                  
+                  {/* Underline highlight stays fixed if active subroute is parsed */}
+                  {isViewingPrograms && (
                     <motion.span 
                       layoutId="activeTab"
                       className="absolute bottom-0 left-0 w-full h-[2px] bg-red-600"
                       transition={{ type: "spring", stiffness: 380, damping: 30 }}
                     />
                   )}
-                </li>
-              ))}
-
-              {/* PROGRAMS DROPDOWN */}
-              <li
-                className="relative px-4 py-2 cursor-pointer group"
-                onMouseEnter={() => setActiveDropdown(true)}
-                onMouseLeave={() => setActiveDropdown(false)}
-              >
-                <div className={`flex items-center gap-1 transition-colors ${activeDropdown ? "text-red-600" : ""}`}>
-                  Explore <ChevronDown size={12} className={`transition-transform duration-300 ${activeDropdown ? "rotate-180" : ""}`} />
                 </div>
                 <AnimatePresence>
                   {activeDropdown && (
@@ -146,7 +140,7 @@ const Navbar = () => {
                               <Zap size={16} />
                             </div>
                             <div>
-                              <div className="text-sm font-bold dark:text-white mb-0.5">{prog.title}</div>
+                              <div className="text-sm font-bold dark:text-white mb-0.5 normal-case tracking-normal">{prog.title}</div>
                               <div className="text-[10px] text-zinc-500 uppercase tracking-wider">{prog.desc}</div>
                             </div>
                           </div>
@@ -156,6 +150,25 @@ const Navbar = () => {
                   )}
                 </AnimatePresence>
               </li>
+
+              {/* CORE UTILITY ROUTE NODES */}
+              {navLinks.map((link) => (
+                <li key={link.name} className="relative px-4 py-2 cursor-pointer group">
+                  <Link 
+                    to={link.href}
+                    className={`transition-colors duration-300 ${location.pathname === link.href ? "text-red-600" : "hover:text-black dark:hover:text-white"}`}
+                  >
+                    {link.name}
+                  </Link>
+                  {location.pathname === link.href && (
+                    <motion.span 
+                      layoutId="activeTab"
+                      className="absolute bottom-0 left-0 w-full h-[2px] bg-red-600"
+                      transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    />
+                  )}
+                </li>
+              ))}
             </ul>
           </div>
 
@@ -163,12 +176,12 @@ const Navbar = () => {
           <div className="flex-1 flex items-center justify-end gap-3">
             <button
               onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="p-2 rounded-xl border border-zinc-200 dark:border-white/10 hover:border-red-600/50 transition-all text-zinc-600 dark:text-white"
+              className="p-2 rounded-xl border border-zinc-200 dark:border-white/10 hover:border-red-600/50 transition-all text-zinc-600 dark:text-white focus:outline-none"
             >
               {theme === "dark" ? <Sun size={18} strokeWidth={2.5} /> : <Moon size={18} strokeWidth={2.5} />}
             </button>
 
-            <Link to="/login" className="hidden xl:block text-[10px] font-black uppercase tracking-widest dark:text-zinc-500 hover:text-red-600 transition-colors mr-2">
+            <Link to="/login" className="hidden xl:block text-[10px] font-black uppercase tracking-widest dark:text-zinc-500 hover:text-red-600 transition-colors mr-2 no-underline">
               Login
             </Link>
 
@@ -176,19 +189,19 @@ const Navbar = () => {
               onClick={() => navigate('/contact')}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="hidden sm:flex bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] items-center gap-2 shadow-lg shadow-red-600/20"
+              className="hidden sm:flex bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] items-center gap-2 shadow-lg shadow-red-600/20 focus:outline-none"
             >
               Train Now
             </motion.button>
 
-            <button className="lg:hidden dark:text-white p-2 relative z-50 pointer-events-auto" onClick={() => setMenuOpen(true)}>
+            <button className="lg:hidden dark:text-white p-2 relative z-50 pointer-events-auto focus:outline-none" onClick={() => setMenuOpen(true)}>
               <Menu size={24} />
             </button>
           </div>
         </motion.nav>
       </div>
 
-      {/* MOBILE SIDEBAR */}
+      {/* MOBILE SIDEBAR CONSOLE */}
       <AnimatePresence>
         {menuOpen && (
           <>
@@ -204,12 +217,22 @@ const Navbar = () => {
             >
               <div className="flex justify-between items-center mb-12">
                 <span className="font-black text-[10px] uppercase tracking-widest text-zinc-400">Navigation</span>
-                <button onClick={() => setMenuOpen(false)} className="dark:text-white">
+                <button onClick={() => setMenuOpen(false)} className="dark:text-white focus:outline-none">
                   <X size={28} />
                 </button>
               </div>
 
-              <nav className="flex flex-col gap-6">
+              <nav className="flex flex-col gap-5 overflow-y-auto max-h-[calc(100vh-280px)] pr-2">
+                {/* Mobile Specific View: Includes explicit program landing endpoint reference */}
+                <button
+                  onClick={() => handleNavClick('/programs')}
+                  className={`text-left text-3xl font-black uppercase italic tracking-tighter transition-colors ${
+                    isViewingPrograms ? "text-red-600" : "text-zinc-800 dark:text-white"
+                  }`}
+                >
+                  Programs
+                </button>
+
                 {navLinks.map((link) => (
                   <button
                     key={link.name}
@@ -221,28 +244,29 @@ const Navbar = () => {
                     {link.name}
                   </button>
                 ))}
+                
                 <Link 
                   to="/login" 
                   onClick={() => setMenuOpen(false)}
-                  className="text-left text-3xl font-black uppercase italic tracking-tighter text-zinc-400"
+                  className="text-left text-3xl font-black uppercase italic tracking-tighter text-zinc-400 no-underline"
                 >
                   Admin
                 </Link>
               </nav>
 
-              <div className="mt-12 pt-8 border-t border-zinc-200 dark:border-white/5">
-                <p className="font-black text-[10px] uppercase tracking-widest text-zinc-400 mb-6">Follow the hustle</p>
+              <div className="mt-8 pt-6 border-t border-zinc-200 dark:border-white/5">
+                <p className="font-black text-[10px] uppercase tracking-widest text-zinc-400 mb-4">Follow the hustle</p>
                 <div className="flex gap-4">
-                  <a href="#" className="p-3 rounded-full bg-zinc-100 dark:bg-white/5 dark:text-white hover:text-red-600 transition-colors"><Instagram size={20} /></a>
-                  <a href="#" className="p-3 rounded-full bg-zinc-100 dark:bg-white/5 dark:text-white hover:text-red-600 transition-colors"><Twitter size={20} /></a>
-                  <a href="#" className="p-3 rounded-full bg-zinc-100 dark:bg-white/5 dark:text-white hover:text-red-600 transition-colors"><Youtube size={20} /></a>
+                  <a href="#" className="p-3 rounded-full bg-zinc-100 dark:bg-white/5 dark:text-white hover:text-red-600 transition-colors"><Instagram size={18} /></a>
+                  <a href="#" className="p-3 rounded-full bg-zinc-100 dark:bg-white/5 dark:text-white hover:text-red-600 transition-colors"><Twitter size={18} /></a>
+                  <a href="#" className="p-3 rounded-full bg-zinc-100 dark:bg-white/5 dark:text-white hover:text-red-600 transition-colors"><Youtube size={18} /></a>
                 </div>
               </div>
 
-              <div className="mt-auto">
+              <div className="mt-auto pt-4">
                 <button 
                   onClick={() => handleNavClick('/contact')}
-                  className="w-full bg-red-600 py-4 rounded-xl text-white font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 group"
+                  className="w-full bg-red-600 py-4 rounded-xl text-white font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 group focus:outline-none"
                 >
                   Join the Forge <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
                 </button>

@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 
+const BASE_API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
 const Gallery = () => {
   const [images, setImages] = useState([]); // Base images
   const [filteredImages, setFilteredImages] = useState([]); // Filtered view
@@ -11,7 +13,7 @@ const Gallery = () => {
   useEffect(() => {
     const fetchImages = async () => {
       try {
-        const res = await axios.get("http://localhost:5000/api/gallery");
+        const res = await axios.get(`${BASE_API_URL}/api/gallery`);
         
         // ✅ The Fix: Access res.data.data because of our new server response format
         const fetchedData = res.data.data || []; 
