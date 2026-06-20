@@ -35,7 +35,7 @@ const Register = () => {
     try {
       const payload = {
         ...formData,
-        roleRequest: isAdminMode ? "admin" : "client"
+        roleRequest: isAdminMode ? "admin" : "member"
       };
 
       const res = await fetch(getApiUrl(), {
@@ -74,8 +74,11 @@ const Register = () => {
           
           <div className="text-center mb-8">
             <h2 className="text-3xl font-black text-white italic uppercase tracking-tighter">
-              Account <span className="text-red-600">Init</span>
+              Member <span className="text-red-600">Registration</span>
             </h2>
+            <p className="text-[10px] text-zinc-400 uppercase tracking-[0.3em] mt-3 max-w-md mx-auto">
+              Create a gym member account. Admin accounts are only for staff and require the secret key.
+            </p>
             
             <div className="flex bg-black/50 p-1.5 rounded-2xl mt-6 border border-white/5 relative">
               <button 
@@ -83,7 +86,7 @@ const Register = () => {
                 onClick={() => setIsAdminMode(false)}
                 className={`flex-1 py-2.5 text-[10px] font-black uppercase rounded-xl z-10 transition-all ${!isAdminMode ? 'text-white' : 'text-zinc-500'}`}
               >
-                Client
+                Member
               </button>
               <button 
                 type="button"
@@ -155,7 +158,7 @@ const Register = () => {
             </AnimatePresence>
 
             <button disabled={isLoading} className="w-full bg-red-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-red-700 active:scale-[0.98] transition-all shadow-xl shadow-red-600/20 disabled:opacity-50 disabled:cursor-not-allowed">
-              {isLoading ? <Loader2 className="animate-spin mx-auto" size={18} /> : "Establish Credentials"}
+              {isLoading ? <Loader2 className="animate-spin mx-auto" size={18} /> : "Create Member Account"}
             </button>
           </form>
 

@@ -12,7 +12,7 @@ exports.register = async (req, res) => {
     if (existingUser) return res.status(400).json({ message: "User already exists" });
 
     // 2. Role Logic: Only grant 'admin' if the secret key matches
-    let assignedRole = 'client';
+    let assignedRole = 'member';
     if (roleRequest === 'admin') {
       if (adminSecret !== process.env.ADMIN_SECRET_KEY) {
         return res.status(403).json({ message: "Invalid Admin Authorization Key" });

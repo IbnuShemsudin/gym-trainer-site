@@ -49,6 +49,8 @@ const Navbar = () => {
     { name: "Home", href: "/", id: "hero" },
     { name: "Gallery", href: "/gallery", id: "gallery" },
     { name: "Pricing", href: "/pricing", id: "pricing" },
+    { name: "Membership", href: "/membership", id: "membership" },
+    { name: "Register", href: "/register", id: "register" },
     { name: "Contact", href: "/contact", id: "contact" },
     { name: "About", href: "/about", id: "about" },
   ];
@@ -186,12 +188,12 @@ const Navbar = () => {
             </Link>
 
             <motion.button
-              onClick={() => navigate('/contact')}
+              onClick={() => navigate('/register')}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               className="hidden sm:flex bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] items-center gap-2 shadow-lg shadow-red-600/20 focus:outline-none"
             >
-              Train Now
+              Join Now
             </motion.button>
 
             <button className="lg:hidden dark:text-white p-2 relative z-50 pointer-events-auto focus:outline-none" onClick={() => setMenuOpen(true)}>
@@ -246,6 +248,13 @@ const Navbar = () => {
                 ))}
                 
                 <Link 
+                  to="/register" 
+                  onClick={() => setMenuOpen(false)}
+                  className="text-left text-3xl font-black uppercase italic tracking-tighter text-zinc-800 dark:text-white no-underline"
+                >
+                  Join Now
+                </Link>
+                <Link 
                   to="/login" 
                   onClick={() => setMenuOpen(false)}
                   className="text-left text-3xl font-black uppercase italic tracking-tighter text-zinc-400 no-underline"
@@ -265,7 +274,7 @@ const Navbar = () => {
 
               <div className="mt-auto pt-4">
                 <button 
-                  onClick={() => handleNavClick('/contact')}
+                  onClick={() => handleNavClick('/register')}
                   className="w-full bg-red-600 py-4 rounded-xl text-white font-black uppercase tracking-widest text-xs flex items-center justify-center gap-2 group focus:outline-none"
                 >
                   Join the Forge <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />

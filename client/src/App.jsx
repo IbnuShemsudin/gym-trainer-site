@@ -20,6 +20,7 @@ import Pricing from "./components/Pricing";
 import Contact from "./components/Contact";
 import About from "./pages/About";
 import Services from "./pages/Services"; 
+import MembershipRegistration from "./pages/MembershipRegistration";
 import Terms from "./pages/Terms";
 import Privacy from "./pages/Privacy";
 
@@ -163,9 +164,13 @@ function MainContent({ theme, setTheme, selectedPlan, setSelectedPlan }) {
           <Route 
             path="/services" 
             element={
-              <ProtectedRoute>
-                <PageWrapper><Services /></PageWrapper>
-              </ProtectedRoute>
+              <PageWrapper><Services /></PageWrapper>
+            } 
+          />
+          <Route 
+            path="/membership" 
+            element={
+              <PageWrapper><MembershipRegistration /></PageWrapper>
             } 
           />
 
